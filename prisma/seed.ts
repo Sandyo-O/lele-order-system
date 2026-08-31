@@ -21,40 +21,50 @@ async function main() {
         create: [
           {
             name: "營養煎鮭魚飯",
-            singlePrice: 350,
+            singlePrice: 300,
+            comboPrice: 350,
             isMarketPrice: true,
             addOns: LIMITED_SOUP_ADDON,
             note: "時價，實際價格請店家於後台確認調整",
+            singleVariantStyle: "discount",
             sortOrder: 1,
           },
           {
             name: "酥煎鱈魚飯",
-            singlePrice: 330,
+            singlePrice: 280,
+            comboPrice: 330,
             isMarketPrice: true,
             addOns: LIMITED_SOUP_ADDON,
             note: "時價，實際價格請店家於後台確認調整",
+            singleVariantStyle: "discount",
             sortOrder: 2,
           },
           {
             name: "煎/紅燒虱目魚飯",
-            singlePrice: 280,
+            singlePrice: 230,
+            comboPrice: 280,
             isMarketPrice: true,
             addOns: LIMITED_SOUP_ADDON,
             note: "時價，實際價格請店家於後台確認調整",
+            singleVariantStyle: "discount",
             sortOrder: 3,
           },
           {
             name: "煎/紅燒鱸魚飯(片)",
-            singlePrice: 250,
+            singlePrice: 200,
+            comboPrice: 250,
             addOns: LIMITED_SOUP_ADDON,
+            singleVariantStyle: "discount",
             sortOrder: 4,
           },
           {
             name: "薄鹽鯖魚飯(片)",
-            singlePrice: 190,
+            singlePrice: 140,
+            comboPrice: 190,
             isMarketPrice: true,
             addOns: LIMITED_SOUP_ADDON,
             note: "菜單手寫字跡不易辨識，請店家於後台確認正確價格",
+            singleVariantStyle: "discount",
             sortOrder: 5,
           },
           {
@@ -81,6 +91,7 @@ async function main() {
             singlePrice: 180,
             comboPrice: 230,
             addOns: LIMITED_SOUP_ADDON,
+            singleVariantStyle: "discount",
             sortOrder: 1,
           },
           {
@@ -88,6 +99,7 @@ async function main() {
             singlePrice: 150,
             comboPrice: 200,
             addOns: LIMITED_SOUP_ADDON,
+            singleVariantStyle: "discount",
             sortOrder: 2,
           },
           {
@@ -95,6 +107,7 @@ async function main() {
             singlePrice: 150,
             comboPrice: 200,
             addOns: LIMITED_SOUP_ADDON,
+            singleVariantStyle: "discount",
             sortOrder: 3,
           },
           {
@@ -102,6 +115,7 @@ async function main() {
             singlePrice: 120,
             comboPrice: 170,
             addOns: LIMITED_SOUP_ADDON,
+            singleVariantStyle: "discount",
             sortOrder: 4,
           },
           {
@@ -109,13 +123,15 @@ async function main() {
             singlePrice: 100,
             comboPrice: 150,
             addOns: LIMITED_SOUP_ADDON,
+            singleVariantStyle: "discount",
             sortOrder: 5,
           },
           {
             name: "小雞湯特餐",
             singlePrice: 100,
             comboPrice: 150,
-            requiresDailySoupChoice: true,
+            dailyChoiceType: "soup",
+            singleVariantStyle: "discount",
             sortOrder: 6,
           },
         ],
@@ -129,7 +145,7 @@ async function main() {
       sortOrder: 5,
       items: {
         create: [
-          { name: "現炒時蔬", singlePrice: 100, sortOrder: 1 },
+          { name: "現炒時蔬", singlePrice: 100, dailyChoiceType: "vegetable", sortOrder: 1 },
           { name: "麻油(乾)麵線", singlePrice: 50, sortOrder: 2 },
           {
             name: "煎個蔥仔蛋",
@@ -283,6 +299,7 @@ async function main() {
       { key: "closedDays", value: "每周日及國定假日" },
       { key: "orderNote", value: "掃描桌上 QR code 線上點餐，送出後請至櫃台結帳" },
       { key: "dailySoupOptions", value: "" },
+      { key: "dailyVegOptions", value: "" },
     ],
   });
 

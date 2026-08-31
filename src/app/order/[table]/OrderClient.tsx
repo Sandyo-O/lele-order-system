@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   parseAddOns,
   parseTags,
@@ -8,8 +8,11 @@ import {
   formatPrice,
   STAPLE_SWAP_ADDON_NAME,
   DAILY_SOUP_ADDON_MARKER,
+  DAILY_CHOICE_LABELS,
   type AddOn,
 } from "@/lib/menu";
+
+type DailyChoiceType = "soup" | "vegetable" | null;
 
 type MenuItemView = {
   id: string;
@@ -20,7 +23,8 @@ type MenuItemView = {
   tags: string | null;
   addOns: string | null;
   note: string | null;
-  requiresDailySoupChoice: boolean;
+  dailyChoiceType: DailyChoiceType;
+  singleVariantStyle: string;
 };
 
 type CategoryView = { id: string; name: string; items: MenuItemView[] };
@@ -151,8 +155,7 @@ function ItemRow({
 }) {
   const availableAddOns = useMemo(() => parseAddOns(item.addOns), [item.addOns]);
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
-  const isSimple =
-    !hasCombo && !item.requiresDailySoupChoice && availableAddOns.length === 0;
+  const isSimple = !hasCombo && !item.dailyChoiceType && availableAddOns.length === 0;
   const orderable = item.singlePrice !== null || item.comboPrice !== null;
 
   return (
@@ -185,15 +188,19 @@ function ItemRow({
 }
 
 const STAPLE_OPTIONS = ["白飯", "滷肉飯"];
+const DAILY_CHOICE_NOTE_PREFIX: Record<string, string> = {
+  soup: "口味",
+  vegetable: "今日蔬菜",
+};
 
 function ItemSheet({
   item,
-  dailySoupOptions,
+  dailyOptionsByType,
   onClose,
   onAdd,
 }: {
   item: MenuItemView;
-  dailySoupOptions: string[];
+  dailyOptionsByType: Record<"soup" | "vegetable", string[]>;
   onClose: () => void;
   onAdd: (line: Omit<CartLine, "key" | "quantity">, quantity: number) => void;
 }) {
@@ -203,19 +210,22 @@ function ItemSheet({
   const regularAddOns = allAddOns.filter(
     (a) => a.name !== STAPLE_SWAP_ADDON_NAME && a.name !== dailySoupAddOn?.name
   );
+  const itemDailyOptions = item.dailyChoiceType ? dailyOptionsByType[item.dailyChoiceType] : [];
 
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
+  const isDiscountStyle = hasCombo && item.singleVariantStyle === "discount";
   const [variant, setVariant] = useState<"single" | "combo">(hasCombo ? "combo" : "single");
   const [staple, setStaple] = useState<string>(STAPLE_OPTIONS[0]);
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
   const [wantsDailySoup, setWantsDailySoup] = useState(false);
-  const [dailySoupFlavor, setDailySoupFlavor] = useState(dailySoupOptions[0] ?? "");
-  const [itemSoupFlavor, setItemSoupFlavor] = useState(dailySoupOptions[0] ?? "");
+  const [dailySoupFlavor, setDailySoupFlavor] = useState(dailyOptionsByType.soup[0] ?? "");
+  const [itemDailyChoice, setItemDailyChoice] = useState(itemDailyOptions[0] ?? "");
   const [customNote, setCustomNote] = useState("");
   const [quantity, setQuantity] = useState(1);
 
   const showAddOnsSection = !hasCombo || variant === "combo";
   const showStaplePicker = !!stapleSwapAddOn && variant === "combo";
+  const singleDiscount = hasCombo ? (item.comboPrice ?? 0) - (item.singlePrice ?? 0) : 0;
 
   const basePrice = variant === "combo" ? item.comboPrice : item.singlePrice;
   const staplePrice = showStaplePicker && staple === stapleSwapAddOn?.name ? stapleSwapAddOn.price : 0;
@@ -240,9 +250,13 @@ function ItemSheet({
 
     const noteParts: string[] = [];
     if (showStaplePicker && staple === "滷肉飯") noteParts.push("主食：滷肉飯");
-    if (wantsDailySoup && dailySoupOptions.length > 0) noteParts.push(`雞湯口味：${dailySoupFlavor}`);
-    if (item.requiresDailySoupChoice) {
-      noteParts.push(dailySoupOptions.length > 0 ? `口味：${itemSoupFlavor}` : "口味：請跟店員確認今日口味");
+    if (wantsDailySoup && dailyOptionsByType.soup.length > 0)
+      noteParts.push(`雞湯口味：${dailySoupFlavor}`);
+    if (item.dailyChoiceType) {
+      const prefix = DAILY_CHOICE_NOTE_PREFIX[item.dailyChoiceType] ?? "選擇";
+      noteParts.push(
+        itemDailyOptions.length > 0 ? `${prefix}：${itemDailyChoice}` : `${prefix}：請跟店員確認今日選項`
+      );
     }
     if (customNote.trim()) noteParts.push(customNote.trim());
     const note = noteParts.join("；");
@@ -285,7 +299,7 @@ function ItemSheet({
         {item.note && <p className="text-xs text-stone-400 mt-2">{item.note}</p>}
 
         <div className="mt-4 space-y-4">
-          {hasCombo && (
+          {hasCombo && !isDiscountStyle && (
             <div className="flex gap-2">
               <button
                 className={`flex-1 px-3 py-2.5 rounded-xl text-sm border font-medium ${
@@ -308,6 +322,27 @@ function ItemSheet({
                 套餐 {formatPrice(item.comboPrice)}
               </button>
             </div>
+          )}
+
+          {hasCombo && isDiscountStyle && (
+            <label
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-sm font-medium cursor-pointer ${
+                variant === "single"
+                  ? "border-red-500 bg-red-50 text-red-900"
+                  : "border-stone-300 bg-white text-stone-800"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={variant === "single"}
+                  onChange={(e) => setVariant(e.target.checked ? "single" : "combo")}
+                  className="accent-red-600 w-4 h-4"
+                />
+                單點（不附白飯/小菜/湯）
+              </span>
+              <span className="text-stone-700 font-semibold">－${singleDiscount}</span>
+            </label>
           )}
 
           {hasCombo && variant === "combo" && (
@@ -364,9 +399,9 @@ function ItemSheet({
               </label>
               {wantsDailySoup && (
                 <div className="mt-2 pl-2">
-                  {dailySoupOptions.length > 0 ? (
+                  {dailyOptionsByType.soup.length > 0 ? (
                     <div className="flex gap-2 flex-wrap">
-                      {dailySoupOptions.map((flavor) => (
+                      {dailyOptionsByType.soup.map((flavor) => (
                         <button
                           key={flavor}
                           className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 ${
@@ -388,27 +423,29 @@ function ItemSheet({
             </div>
           )}
 
-          {item.requiresDailySoupChoice && (
+          {item.dailyChoiceType && (
             <div>
-              <p className="text-sm font-semibold text-stone-800 mb-2">請選擇今日雞湯口味</p>
-              {dailySoupOptions.length > 0 ? (
+              <p className="text-sm font-semibold text-stone-800 mb-2">
+                {DAILY_CHOICE_LABELS[item.dailyChoiceType] ?? "請選擇"}
+              </p>
+              {itemDailyOptions.length > 0 ? (
                 <div className="flex gap-2 flex-wrap">
-                  {dailySoupOptions.map((flavor) => (
+                  {itemDailyOptions.map((option) => (
                     <button
-                      key={flavor}
+                      key={option}
                       className={`px-3 py-2 rounded-xl text-sm font-medium border-2 ${
-                        itemSoupFlavor === flavor
+                        itemDailyChoice === option
                           ? "border-red-500 bg-red-50 text-red-900"
                           : "border-stone-300 bg-white text-stone-800"
                       }`}
-                      onClick={() => setItemSoupFlavor(flavor)}
+                      onClick={() => setItemDailyChoice(option)}
                     >
-                      {flavor}
+                      {option}
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-stone-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
+                <p className="text-xs text-stone-400">今日選項尚未設定，送出後請跟店員確認</p>
               )}
             </div>
           )}
@@ -495,14 +532,14 @@ export default function OrderClient({
   storeName,
   orderNote,
   categories,
-  dailySoupOptions,
+  dailyOptionsByType,
 }: {
   tableNumber: number;
   tableLabel: string | null;
   storeName: string;
   orderNote: string;
   categories: CategoryView[];
-  dailySoupOptions: string[];
+  dailyOptionsByType: Record<"soup" | "vegetable", string[]>;
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [view, setView] = useState<"menu" | "cart" | "success">("menu");
@@ -517,9 +554,21 @@ export default function OrderClient({
   const pillRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const scrollingRef = useRef(false);
   const scrollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const [stickyHeight, setStickyHeight] = useState(140);
 
   const total = cart.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const itemCount = cart.reduce((sum, l) => sum + l.quantity, 0);
+
+  useLayoutEffect(() => {
+    const el = stickyRef.current;
+    if (!el) return;
+    const update = () => setStickyHeight(el.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -532,11 +581,11 @@ export default function OrderClient({
           }
         }
       },
-      { rootMargin: "-140px 0px -65% 0px", threshold: 0 }
+      { rootMargin: `-${stickyHeight}px 0px -65% 0px`, threshold: 0 }
     );
     Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, [categories]);
+  }, [categories, stickyHeight]);
 
   useEffect(() => {
     if (activeCategory) {
@@ -726,16 +775,17 @@ export default function OrderClient({
 
   return (
     <div className="flex-1 flex flex-col max-w-md mx-auto w-full pb-28 bg-stone-50">
-      <header className="sticky top-0 bg-gradient-to-r from-red-900 to-red-700 text-white px-4 pt-4 pb-3 z-20 shadow-sm">
-        <h1 className="font-bold text-lg">{storeName}</h1>
-        <p className="text-sm text-red-50/90">
-          桌號 {tableNumber}
-          {tableLabel ? `（${tableLabel}）` : ""}
-        </p>
-        {orderNote && <p className="text-xs text-red-50/70 mt-1">{orderNote}</p>}
-      </header>
+      <div ref={stickyRef} className="sticky top-0 z-20 shadow-sm">
+        <header className="bg-gradient-to-r from-red-900 to-red-700 text-white px-4 pt-4 pb-3">
+          <h1 className="font-bold text-lg">{storeName}</h1>
+          <p className="text-sm text-red-50/90">
+            桌號 {tableNumber}
+            {tableLabel ? `（${tableLabel}）` : ""}
+          </p>
+          {orderNote && <p className="text-xs text-red-50/70 mt-1">{orderNote}</p>}
+        </header>
 
-      <nav className="sticky top-[76px] bg-stone-50/95 backdrop-blur border-b border-stone-200 z-10 overflow-x-auto no-scrollbar">
+        <nav className="bg-stone-50/95 backdrop-blur border-b border-stone-200 overflow-x-auto no-scrollbar">
         <div className="flex gap-2 px-4 py-2 w-max">
           {categories.map((cat) => (
             <button
@@ -754,7 +804,8 @@ export default function OrderClient({
             </button>
           ))}
         </div>
-      </nav>
+        </nav>
+      </div>
 
       <div className="px-4">
         {categories.map((cat) => (
@@ -764,7 +815,8 @@ export default function OrderClient({
             ref={(el) => {
               sectionRefs.current[cat.id] = el;
             }}
-            className="mt-4 scroll-mt-[132px]"
+            className="mt-4"
+            style={{ scrollMarginTop: stickyHeight + 8 }}
           >
             <h2 className="text-stone-800 font-bold mb-1 flex items-center gap-1.5">
               <span>{categoryIcon(cat.name)}</span> {cat.name}
@@ -796,7 +848,7 @@ export default function OrderClient({
         <ItemSheet
           key={modalItem.id}
           item={modalItem}
-          dailySoupOptions={dailySoupOptions}
+          dailyOptionsByType={dailyOptionsByType}
           onClose={() => setModalItem(null)}
           onAdd={addToCart}
         />

@@ -42,6 +42,18 @@ export default async function SettingsPage() {
             這裡設定的口味，會出現在「套餐加購限定雞湯」和「小雞湯特餐」給客人選
           </span>
         </label>
+        <label className="block text-sm">
+          今日蔬菜（每行一種，例如：炒高麗菜）
+          <textarea
+            name="dailyVegOptions"
+            defaultValue={map.dailyVegOptions ?? ""}
+            rows={3}
+            className="w-full border border-neutral-300 rounded px-2 py-1.5 mt-0.5"
+          />
+          <span className="text-xs text-neutral-400">
+            這裡設定的蔬菜，會出現在「現炒時蔬」給客人選
+          </span>
+        </label>
         <button className="bg-amber-600 text-white px-4 py-2 rounded-full text-sm">
           儲存設定
         </button>

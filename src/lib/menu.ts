@@ -48,7 +48,7 @@ export function formatPrice(price: number | null | undefined): string {
 export const STAPLE_SWAP_ADDON_NAME = "換麵線";
 export const DAILY_SOUP_ADDON_MARKER = "限定雞湯";
 
-export function parseDailySoupOptions(text: string | null | undefined): string[] {
+export function parseDailyListOptions(text: string | null | undefined): string[] {
   if (!text) return [];
   return text
     .split("\n")
@@ -56,6 +56,7 @@ export function parseDailySoupOptions(text: string | null | undefined): string[]
     .filter(Boolean);
 }
 
-export function dailySoupOptionsToText(options: string[]): string {
-  return options.join("\n");
-}
+export const DAILY_CHOICE_LABELS: Record<string, string> = {
+  soup: "請選擇今日雞湯口味",
+  vegetable: "請選擇今日蔬菜",
+};

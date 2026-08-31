@@ -56,6 +56,11 @@ function numOrNull(value: FormDataEntryValue | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function dailyChoiceTypeOrNull(value: FormDataEntryValue | null): string | null {
+  const str = String(value ?? "");
+  return str === "soup" || str === "vegetable" ? str : null;
+}
+
 export async function createCategory(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
@@ -89,7 +94,8 @@ export async function createMenuItem(formData: FormData) {
       tags: tags || null,
       addOns: parseAddOnsText(String(formData.get("addOnsText") ?? "")),
       note: String(formData.get("note") ?? "").trim() || null,
-      requiresDailySoupChoice: formData.get("requiresDailySoupChoice") === "on",
+      dailyChoiceType: dailyChoiceTypeOrNull(formData.get("dailyChoiceType")),
+      singleVariantStyle: String(formData.get("singleVariantStyle") ?? "toggle"),
       sortOrder: count + 1,
     },
   });
@@ -113,7 +119,8 @@ export async function updateMenuItem(formData: FormData) {
       tags: tags || null,
       addOns: parseAddOnsText(String(formData.get("addOnsText") ?? "")),
       note: String(formData.get("note") ?? "").trim() || null,
-      requiresDailySoupChoice: formData.get("requiresDailySoupChoice") === "on",
+      dailyChoiceType: dailyChoiceTypeOrNull(formData.get("dailyChoiceType")),
+      singleVariantStyle: String(formData.get("singleVariantStyle") ?? "toggle"),
       isAvailable: formData.get("isAvailable") === "on",
     },
   });
@@ -124,6 +131,30 @@ export async function deleteMenuItem(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await prisma.menuItem.delete({ where: { id } });
+  revalidatePath("/admin");
+}
+
+export async function moveMenuItem(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const direction = String(formData.get("direction") ?? "");
+  if (!id || (direction !== "up" && direction !== "down")) return;
+
+  const item = await prisma.menuItem.findUnique({ where: { id } });
+  if (!item) return;
+
+  const siblings = await prisma.menuItem.findMany({
+    where: { categoryId: item.categoryId },
+    orderBy: { sortOrder: "asc" },
+  });
+  const index = siblings.findIndex((s) => s.id === id);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= siblings.length) return;
+
+  const neighbor = siblings[swapIndex];
+  await prisma.$transaction([
+    prisma.menuItem.update({ where: { id: item.id }, data: { sortOrder: neighbor.sortOrder } }),
+    prisma.menuItem.update({ where: { id: neighbor.id }, data: { sortOrder: item.sortOrder } }),
+  ]);
   revalidatePath("/admin");
 }
 
@@ -151,6 +182,7 @@ export async function updateSettings(formData: FormData) {
     "closedDays",
     "orderNote",
     "dailySoupOptions",
+    "dailyVegOptions",
   ];
   await Promise.all(
     keys.map((key) =>

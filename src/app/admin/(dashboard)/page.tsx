@@ -6,6 +6,7 @@ import {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  moveMenuItem,
 } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -46,16 +47,43 @@ export default async function AdminMenuPage() {
           </div>
 
           <div className="space-y-2">
-            {category.items.map((item) => {
+            {category.items.map((item, index) => {
               const currentTags = parseTags(item.tags);
               return (
-                <details key={item.id} className="border border-neutral-200 rounded-lg">
-                  <summary className="px-3 py-2 cursor-pointer flex items-center justify-between text-sm">
-                    <span>
+                <div key={item.id} className="flex items-center gap-1.5">
+                  <div className="flex flex-col shrink-0">
+                    <form action={moveMenuItem}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <input type="hidden" name="direction" value="up" />
+                      <button
+                        type="submit"
+                        disabled={index === 0}
+                        className="block leading-none text-xs px-1.5 py-0.5 text-neutral-500 disabled:opacity-20"
+                        title="往上移"
+                      >
+                        ▲
+                      </button>
+                    </form>
+                    <form action={moveMenuItem}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <input type="hidden" name="direction" value="down" />
+                      <button
+                        type="submit"
+                        disabled={index === category.items.length - 1}
+                        className="block leading-none text-xs px-1.5 py-0.5 text-neutral-500 disabled:opacity-20"
+                        title="往下移"
+                      >
+                        ▼
+                      </button>
+                    </form>
+                  </div>
+                <details className="border border-neutral-200 rounded-lg flex-1 min-w-0">
+                  <summary className="px-3 py-2 cursor-pointer flex items-center justify-between text-sm gap-2">
+                    <span className="truncate">
                       {!item.isAvailable && "🚫 "}
                       {item.name}
                     </span>
-                    <span className="text-neutral-500">
+                    <span className="text-neutral-500 shrink-0">
                       {formatPrice(item.singlePrice)}
                       {item.comboPrice ? ` / 套 ${formatPrice(item.comboPrice)}` : ""}
                     </span>
@@ -108,14 +136,31 @@ export default async function AdminMenuPage() {
                         />
                         上架中（取消勾選 = 暫停供應）
                       </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          name="requiresDailySoupChoice"
-                          defaultChecked={item.requiresDailySoupChoice}
-                        />
-                        需要客人選擇今日雞湯口味（口味在「店家設定」裡設定）
-                      </label>
+                      <div className="flex gap-2">
+                        <label className="block flex-1">
+                          單點/套餐怎麼呈現
+                          <select
+                            name="singleVariantStyle"
+                            defaultValue={item.singleVariantStyle}
+                            className="w-full border border-neutral-300 rounded px-2 py-1 mt-0.5"
+                          >
+                            <option value="toggle">兩個按鈕平等選（像雞湯）</option>
+                            <option value="discount">預設套餐，單點用打勾折抵（像魚/肉）</option>
+                          </select>
+                        </label>
+                        <label className="block flex-1">
+                          今日選項
+                          <select
+                            name="dailyChoiceType"
+                            defaultValue={item.dailyChoiceType ?? ""}
+                            className="w-full border border-neutral-300 rounded px-2 py-1 mt-0.5"
+                          >
+                            <option value="">不需要</option>
+                            <option value="soup">今日雞湯口味</option>
+                            <option value="vegetable">今日蔬菜</option>
+                          </select>
+                        </label>
+                      </div>
                       <div>
                         <span className="block mb-1">標籤</span>
                         <div className="flex flex-wrap gap-3">
@@ -159,6 +204,7 @@ export default async function AdminMenuPage() {
                     </form>
                   </div>
                 </details>
+                </div>
               );
             })}
           </div>
@@ -197,10 +243,31 @@ export default async function AdminMenuPage() {
                 <input type="checkbox" name="isMarketPrice" />
                 時價（提醒用，不影響計算）
               </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="requiresDailySoupChoice" />
-                需要客人選擇今日雞湯口味（口味在「店家設定」裡設定）
-              </label>
+              <div className="flex gap-2">
+                <label className="block flex-1">
+                  單點/套餐怎麼呈現
+                  <select
+                    name="singleVariantStyle"
+                    defaultValue="toggle"
+                    className="w-full border border-neutral-300 rounded px-2 py-1 mt-0.5"
+                  >
+                    <option value="toggle">兩個按鈕平等選（像雞湯）</option>
+                    <option value="discount">預設套餐，單點用打勾折抵（像魚/肉）</option>
+                  </select>
+                </label>
+                <label className="block flex-1">
+                  今日選項
+                  <select
+                    name="dailyChoiceType"
+                    defaultValue=""
+                    className="w-full border border-neutral-300 rounded px-2 py-1 mt-0.5"
+                  >
+                    <option value="">不需要</option>
+                    <option value="soup">今日雞湯口味</option>
+                    <option value="vegetable">今日蔬菜</option>
+                  </select>
+                </label>
+              </div>
               <div>
                 <span className="block mb-1">標籤</span>
                 <div className="flex flex-wrap gap-3">

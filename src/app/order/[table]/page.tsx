@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { parseDailySoupOptions } from "@/lib/menu";
+import { parseDailyListOptions } from "@/lib/menu";
 import OrderClient from "./OrderClient";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,10 @@ export default async function OrderPage({
         tags: item.tags,
         addOns: item.addOns,
         note: item.note,
-        requiresDailySoupChoice: item.requiresDailySoupChoice,
+        dailyChoiceType: (item.dailyChoiceType === "soup" || item.dailyChoiceType === "vegetable"
+          ? item.dailyChoiceType
+          : null) as "soup" | "vegetable" | null,
+        singleVariantStyle: item.singleVariantStyle,
       })),
     }));
 
@@ -57,7 +60,10 @@ export default async function OrderPage({
       storeName={settingsMap.storeName ?? "樂樂雞"}
       orderNote={settingsMap.orderNote ?? ""}
       categories={visibleCategories}
-      dailySoupOptions={parseDailySoupOptions(settingsMap.dailySoupOptions)}
+      dailyOptionsByType={{
+        soup: parseDailyListOptions(settingsMap.dailySoupOptions),
+        vegetable: parseDailyListOptions(settingsMap.dailyVegOptions),
+      }}
     />
   );
 }
