@@ -108,6 +108,14 @@ export default async function AdminMenuPage() {
                         />
                         上架中（取消勾選 = 暫停供應）
                       </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="requiresDailySoupChoice"
+                          defaultChecked={item.requiresDailySoupChoice}
+                        />
+                        需要客人選擇今日雞湯口味（口味在「店家設定」裡設定）
+                      </label>
                       <div>
                         <span className="block mb-1">標籤</span>
                         <div className="flex flex-wrap gap-3">
@@ -188,6 +196,10 @@ export default async function AdminMenuPage() {
               <label className="flex items-center gap-2">
                 <input type="checkbox" name="isMarketPrice" />
                 時價（提醒用，不影響計算）
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="requiresDailySoupChoice" />
+                需要客人選擇今日雞湯口味（口味在「店家設定」裡設定）
               </label>
               <div>
                 <span className="block mb-1">標籤</span>

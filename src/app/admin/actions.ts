@@ -89,6 +89,7 @@ export async function createMenuItem(formData: FormData) {
       tags: tags || null,
       addOns: parseAddOnsText(String(formData.get("addOnsText") ?? "")),
       note: String(formData.get("note") ?? "").trim() || null,
+      requiresDailySoupChoice: formData.get("requiresDailySoupChoice") === "on",
       sortOrder: count + 1,
     },
   });
@@ -112,6 +113,7 @@ export async function updateMenuItem(formData: FormData) {
       tags: tags || null,
       addOns: parseAddOnsText(String(formData.get("addOnsText") ?? "")),
       note: String(formData.get("note") ?? "").trim() || null,
+      requiresDailySoupChoice: formData.get("requiresDailySoupChoice") === "on",
       isAvailable: formData.get("isAvailable") === "on",
     },
   });
@@ -141,7 +143,15 @@ export async function deleteTable(formData: FormData) {
 }
 
 export async function updateSettings(formData: FormData) {
-  const keys = ["storeName", "phone", "address", "hours", "closedDays", "orderNote"];
+  const keys = [
+    "storeName",
+    "phone",
+    "address",
+    "hours",
+    "closedDays",
+    "orderNote",
+    "dailySoupOptions",
+  ];
   await Promise.all(
     keys.map((key) =>
       prisma.setting.upsert({

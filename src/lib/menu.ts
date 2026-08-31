@@ -43,3 +43,19 @@ export function formatPrice(price: number | null | undefined): string {
   if (price === null || price === undefined) return "時價";
   return `$${price}`;
 }
+
+// Name markers used to give certain add-ons special UI treatment without a schema change.
+export const STAPLE_SWAP_ADDON_NAME = "換麵線";
+export const DAILY_SOUP_ADDON_MARKER = "限定雞湯";
+
+export function parseDailySoupOptions(text: string | null | undefined): string[] {
+  if (!text) return [];
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+export function dailySoupOptionsToText(options: string[]): string {
+  return options.join("\n");
+}

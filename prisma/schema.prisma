@@ -30,6 +30,7 @@ model MenuItem {
   tags           String? // comma-separated codes: 調,強,孕,產,復
   addOns         String? // JSON string: [{"name":"加麵線","price":30}]
   note           String?
+  requiresDailySoupChoice Boolean @default(false) // customer must pick today's soup flavor
   isAvailable    Boolean  @default(true)
   sortOrder      Int      @default(0)
   createdAt      DateTime @default(now())

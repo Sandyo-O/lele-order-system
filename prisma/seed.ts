@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const SOUP_NOODLE_ADDON = JSON.stringify([{ name: "加點麵線(白/滷)", price: 30 }]);
+const SOUP_NOODLE_ADDON = JSON.stringify([{ name: "換麵線", price: 30 }]);
 const LIMITED_SOUP_ADDON = JSON.stringify([{ name: "套餐加購限定雞湯", price: 100 }]);
 
 async function main() {
@@ -16,7 +16,7 @@ async function main() {
   await prisma.category.create({
     data: {
       name: "頭好壯壯魚餐",
-      sortOrder: 1,
+      sortOrder: 3,
       items: {
         create: [
           {
@@ -73,18 +73,49 @@ async function main() {
   await prisma.category.create({
     data: {
       name: "私房肉肉餐",
-      sortOrder: 2,
+      sortOrder: 4,
       items: {
         create: [
-          { name: "鹹香炒鹹豬肉飯", singlePrice: 230, addOns: LIMITED_SOUP_ADDON, sortOrder: 1 },
-          { name: "紅燒三層肉飯", singlePrice: 200, addOns: LIMITED_SOUP_ADDON, sortOrder: 2 },
-          { name: "古早味梅乾扣肉飯", singlePrice: 200, addOns: LIMITED_SOUP_ADDON, sortOrder: 3 },
-          { name: "無骨炸雞腿排飯", singlePrice: 170, addOns: LIMITED_SOUP_ADDON, sortOrder: 4 },
-          { name: "中式炸豬排飯", singlePrice: 150, addOns: LIMITED_SOUP_ADDON, sortOrder: 5 },
           {
-            name: "雞湯特餐(每日限定)",
-            singlePrice: 150,
+            name: "鹹香炒鹹豬肉飯",
+            singlePrice: 180,
+            comboPrice: 230,
             addOns: LIMITED_SOUP_ADDON,
+            sortOrder: 1,
+          },
+          {
+            name: "紅燒三層肉飯",
+            singlePrice: 150,
+            comboPrice: 200,
+            addOns: LIMITED_SOUP_ADDON,
+            sortOrder: 2,
+          },
+          {
+            name: "古早味梅乾扣肉飯",
+            singlePrice: 150,
+            comboPrice: 200,
+            addOns: LIMITED_SOUP_ADDON,
+            sortOrder: 3,
+          },
+          {
+            name: "無骨炸雞腿排飯",
+            singlePrice: 120,
+            comboPrice: 170,
+            addOns: LIMITED_SOUP_ADDON,
+            sortOrder: 4,
+          },
+          {
+            name: "中式炸豬排飯",
+            singlePrice: 100,
+            comboPrice: 150,
+            addOns: LIMITED_SOUP_ADDON,
+            sortOrder: 5,
+          },
+          {
+            name: "小雞湯特餐",
+            singlePrice: 100,
+            comboPrice: 150,
+            requiresDailySoupChoice: true,
             sortOrder: 6,
           },
         ],
@@ -95,7 +126,7 @@ async function main() {
   await prisma.category.create({
     data: {
       name: "想要加個菜",
-      sortOrder: 3,
+      sortOrder: 5,
       items: {
         create: [
           { name: "現炒時蔬", singlePrice: 100, sortOrder: 1 },
@@ -123,7 +154,7 @@ async function main() {
   await prisma.category.create({
     data: {
       name: "我想喝補湯",
-      sortOrder: 4,
+      sortOrder: 1,
       items: {
         create: [
           {
@@ -174,7 +205,7 @@ async function main() {
   await prisma.category.create({
     data: {
       name: "媽媽小孩最愛喝",
-      sortOrder: 5,
+      sortOrder: 2,
       items: {
         create: [
           {
@@ -251,6 +282,7 @@ async function main() {
       { key: "hours", value: "AM11:00-14:00 | 17:00-21:00" },
       { key: "closedDays", value: "每周日及國定假日" },
       { key: "orderNote", value: "掃描桌上 QR code 線上點餐，送出後請至櫃台結帳" },
+      { key: "dailySoupOptions", value: "" },
     ],
   });
 

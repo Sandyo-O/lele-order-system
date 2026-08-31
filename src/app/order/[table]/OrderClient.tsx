@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseAddOns, parseTags, TAG_LABELS, formatPrice, type AddOn } from "@/lib/menu";
+import {
+  parseAddOns,
+  parseTags,
+  TAG_LABELS,
+  formatPrice,
+  STAPLE_SWAP_ADDON_NAME,
+  DAILY_SOUP_ADDON_MARKER,
+  type AddOn,
+} from "@/lib/menu";
 
 type MenuItemView = {
   id: string;
@@ -12,6 +20,7 @@ type MenuItemView = {
   tags: string | null;
   addOns: string | null;
   note: string | null;
+  requiresDailySoupChoice: boolean;
 };
 
 type CategoryView = { id: string; name: string; items: MenuItemView[] };
@@ -23,15 +32,16 @@ type CartLine = {
   variant: "single" | "combo" | null;
   unitPrice: number;
   selectedAddOns: AddOn[];
+  note: string;
   quantity: number;
 };
 
-function lineKey(itemId: string, variant: string | null, addOns: AddOn[]) {
+function lineKey(itemId: string, variant: string | null, addOns: AddOn[], note?: string) {
   const addOnPart = addOns
     .map((a) => a.name)
     .sort()
     .join(",");
-  return `${itemId}|${variant}|${addOnPart}`;
+  return `${itemId}|${variant}|${addOnPart}|${note ?? ""}`;
 }
 
 function categoryIcon(name: string) {
@@ -141,23 +151,23 @@ function ItemRow({
 }) {
   const availableAddOns = useMemo(() => parseAddOns(item.addOns), [item.addOns]);
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
-  const isSimple = !hasCombo && availableAddOns.length === 0;
+  const isSimple =
+    !hasCombo && !item.requiresDailySoupChoice && availableAddOns.length === 0;
   const orderable = item.singlePrice !== null || item.comboPrice !== null;
 
   return (
-    <div
-      className={`flex items-center gap-3 py-3.5 border-b border-neutral-100 last:border-0 ${
-        orderable && !isSimple ? "cursor-pointer" : ""
-      }`}
-      onClick={() => orderable && !isSimple && onOpen()}
-    >
-      <div className="flex-1 min-w-0">
+    <div className="flex items-center gap-3 py-3.5 border-b border-neutral-100 last:border-0">
+      <div
+        className={`flex-1 min-w-0 ${orderable ? "cursor-pointer" : ""}`}
+        onClick={() => orderable && onOpen()}
+      >
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="font-medium text-neutral-900">{item.name}</span>
           <TagBadges tags={item.tags} />
         </div>
         {item.note && <p className="text-xs text-neutral-400 mt-0.5">{item.note}</p>}
         <PriceLine item={item} />
+        {orderable && <p className="text-[11px] text-neutral-400 mt-0.5">點一下可加備註</p>}
       </div>
 
       {orderable &&
@@ -174,23 +184,44 @@ function ItemRow({
   );
 }
 
+const STAPLE_OPTIONS = ["白飯", "滷肉飯"];
+
 function ItemSheet({
   item,
+  dailySoupOptions,
   onClose,
   onAdd,
 }: {
   item: MenuItemView;
+  dailySoupOptions: string[];
   onClose: () => void;
   onAdd: (line: Omit<CartLine, "key" | "quantity">, quantity: number) => void;
 }) {
-  const availableAddOns = useMemo(() => parseAddOns(item.addOns), [item.addOns]);
+  const allAddOns = useMemo(() => parseAddOns(item.addOns), [item.addOns]);
+  const stapleSwapAddOn = allAddOns.find((a) => a.name === STAPLE_SWAP_ADDON_NAME);
+  const dailySoupAddOn = allAddOns.find((a) => a.name.includes(DAILY_SOUP_ADDON_MARKER));
+  const regularAddOns = allAddOns.filter(
+    (a) => a.name !== STAPLE_SWAP_ADDON_NAME && a.name !== dailySoupAddOn?.name
+  );
+
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
-  const [variant, setVariant] = useState<"single" | "combo">(item.singlePrice !== null ? "single" : "combo");
+  const [variant, setVariant] = useState<"single" | "combo">(hasCombo ? "combo" : "single");
+  const [staple, setStaple] = useState<string>(STAPLE_OPTIONS[0]);
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
+  const [wantsDailySoup, setWantsDailySoup] = useState(false);
+  const [dailySoupFlavor, setDailySoupFlavor] = useState(dailySoupOptions[0] ?? "");
+  const [itemSoupFlavor, setItemSoupFlavor] = useState(dailySoupOptions[0] ?? "");
+  const [customNote, setCustomNote] = useState("");
   const [quantity, setQuantity] = useState(1);
 
+  const showAddOnsSection = !hasCombo || variant === "combo";
+  const showStaplePicker = !!stapleSwapAddOn && variant === "combo";
+
   const basePrice = variant === "combo" ? item.comboPrice : item.singlePrice;
-  const unitPrice = (basePrice ?? 0) + selectedAddOns.reduce((s, a) => s + a.price, 0);
+  const staplePrice = showStaplePicker && staple === stapleSwapAddOn?.name ? stapleSwapAddOn.price : 0;
+  const dailySoupPrice = wantsDailySoup && dailySoupAddOn ? dailySoupAddOn.price : 0;
+  const addOnsPrice = selectedAddOns.reduce((s, a) => s + a.price, 0);
+  const unitPrice = (basePrice ?? 0) + staplePrice + dailySoupPrice + addOnsPrice;
 
   function toggleAddOn(addOn: AddOn) {
     setSelectedAddOns((prev) =>
@@ -202,13 +233,28 @@ function ItemSheet({
 
   function handleAdd() {
     if (basePrice === null || basePrice === undefined) return;
+
+    const finalAddOns = [...selectedAddOns];
+    if (showStaplePicker && staple === stapleSwapAddOn?.name) finalAddOns.push(stapleSwapAddOn);
+    if (wantsDailySoup && dailySoupAddOn) finalAddOns.push(dailySoupAddOn);
+
+    const noteParts: string[] = [];
+    if (showStaplePicker && staple === "滷肉飯") noteParts.push("主食：滷肉飯");
+    if (wantsDailySoup && dailySoupOptions.length > 0) noteParts.push(`雞湯口味：${dailySoupFlavor}`);
+    if (item.requiresDailySoupChoice) {
+      noteParts.push(dailySoupOptions.length > 0 ? `口味：${itemSoupFlavor}` : "口味：請跟店員確認今日口味");
+    }
+    if (customNote.trim()) noteParts.push(customNote.trim());
+    const note = noteParts.join("；");
+
     onAdd(
       {
         menuItemId: item.id,
         name: item.name,
         variant: hasCombo ? variant : null,
         unitPrice,
-        selectedAddOns,
+        selectedAddOns: finalAddOns,
+        note,
       },
       quantity
     );
@@ -270,11 +316,108 @@ function ItemSheet({
             </p>
           )}
 
-          {availableAddOns.length > 0 && (
+          {showStaplePicker && stapleSwapAddOn && (
+            <div>
+              <p className="text-sm font-semibold text-neutral-800 mb-2">主食（白飯／滷肉飯免費，換麵線加價）</p>
+              <div className="flex gap-2 flex-wrap">
+                {[...STAPLE_OPTIONS, stapleSwapAddOn.name].map((name) => {
+                  const active = staple === name;
+                  const extra = name === stapleSwapAddOn.name ? stapleSwapAddOn.price : 0;
+                  return (
+                    <button
+                      key={name}
+                      className={`px-3 py-2 rounded-xl text-sm font-medium border-2 ${
+                        active
+                          ? "border-amber-500 bg-amber-50 text-amber-900"
+                          : "border-neutral-300 bg-white text-neutral-800"
+                      }`}
+                      onClick={() => setStaple(name)}
+                    >
+                      {name}
+                      {extra > 0 ? `（+$${extra}）` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {showAddOnsSection && dailySoupAddOn && (
+            <div>
+              <label
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-sm font-medium cursor-pointer ${
+                  wantsDailySoup
+                    ? "border-amber-500 bg-amber-50 text-amber-900"
+                    : "border-neutral-300 bg-white text-neutral-800"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={wantsDailySoup}
+                    onChange={(e) => setWantsDailySoup(e.target.checked)}
+                    className="accent-amber-600 w-4 h-4"
+                  />
+                  {dailySoupAddOn.name}
+                </span>
+                <span className="text-neutral-700 font-semibold">+${dailySoupAddOn.price}</span>
+              </label>
+              {wantsDailySoup && (
+                <div className="mt-2 pl-2">
+                  {dailySoupOptions.length > 0 ? (
+                    <div className="flex gap-2 flex-wrap">
+                      {dailySoupOptions.map((flavor) => (
+                        <button
+                          key={flavor}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 ${
+                            dailySoupFlavor === flavor
+                              ? "border-amber-500 bg-amber-100 text-amber-900"
+                              : "border-neutral-300 bg-white text-neutral-700"
+                          }`}
+                          onClick={() => setDailySoupFlavor(flavor)}
+                        >
+                          {flavor}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-neutral-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {item.requiresDailySoupChoice && (
+            <div>
+              <p className="text-sm font-semibold text-neutral-800 mb-2">請選擇今日雞湯口味</p>
+              {dailySoupOptions.length > 0 ? (
+                <div className="flex gap-2 flex-wrap">
+                  {dailySoupOptions.map((flavor) => (
+                    <button
+                      key={flavor}
+                      className={`px-3 py-2 rounded-xl text-sm font-medium border-2 ${
+                        itemSoupFlavor === flavor
+                          ? "border-amber-500 bg-amber-50 text-amber-900"
+                          : "border-neutral-300 bg-white text-neutral-800"
+                      }`}
+                      onClick={() => setItemSoupFlavor(flavor)}
+                    >
+                      {flavor}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-neutral-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
+              )}
+            </div>
+          )}
+
+          {showAddOnsSection && regularAddOns.length > 0 && (
             <div>
               <p className="text-sm font-semibold text-neutral-800 mb-2">加購選項</p>
               <div className="space-y-2">
-                {availableAddOns.map((a) => {
+                {regularAddOns.map((a) => {
                   const checked = selectedAddOns.some((s) => s.name === a.name);
                   return (
                     <label
@@ -301,6 +444,19 @@ function ItemSheet({
               </div>
             </div>
           )}
+
+          <div>
+            <label className="text-sm font-semibold text-neutral-800 mb-2 block">
+              備註（例如：不辣、少油）
+            </label>
+            <textarea
+              className="w-full border-2 border-neutral-300 rounded-xl p-2.5 text-sm text-neutral-900"
+              rows={2}
+              value={customNote}
+              onChange={(e) => setCustomNote(e.target.value)}
+              placeholder="輸入這道菜的特別要求..."
+            />
+          </div>
 
           <div className="flex items-center justify-between pt-1">
             <span className="text-sm font-semibold text-neutral-800">數量</span>
@@ -339,12 +495,14 @@ export default function OrderClient({
   storeName,
   orderNote,
   categories,
+  dailySoupOptions,
 }: {
   tableNumber: number;
   tableLabel: string | null;
   storeName: string;
   orderNote: string;
   categories: CategoryView[];
+  dailySoupOptions: string[];
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [view, setView] = useState<"menu" | "cart" | "success">("menu");
@@ -391,7 +549,7 @@ export default function OrderClient({
   }, [activeCategory]);
 
   function addToCart(line: Omit<CartLine, "key" | "quantity">, quantity: number) {
-    const key = lineKey(line.menuItemId, line.variant, line.selectedAddOns);
+    const key = lineKey(line.menuItemId, line.variant, line.selectedAddOns, line.note);
     setCart((prev) => {
       const existing = prev.find((l) => l.key === key);
       if (existing) {
@@ -417,13 +575,14 @@ export default function OrderClient({
         variant: null,
         unitPrice: item.singlePrice ?? 0,
         selectedAddOns: [],
+        note: "",
       },
       1
     );
   }
 
   function quickRemove(item: MenuItemView) {
-    updateQuantity(lineKey(item.id, null, []), -1);
+    updateQuantity(lineKey(item.id, null, [], ""), -1);
   }
 
   function scrollToCategory(id: string) {
@@ -451,6 +610,7 @@ export default function OrderClient({
             quantity: l.quantity,
             variant: l.variant,
             selectedAddOns: l.selectedAddOns,
+            note: l.note || undefined,
           })),
         }),
       });
@@ -516,6 +676,7 @@ export default function OrderClient({
                       {l.selectedAddOns.length > 0 &&
                         ` ・ ${l.selectedAddOns.map((a) => a.name).join("、")}`}
                     </div>
+                    {l.note && <div className="text-xs text-amber-700 mt-0.5">備註：{l.note}</div>}
                     <div className="text-sm text-amber-700 font-medium">
                       ${l.unitPrice} x {l.quantity}
                     </div>
@@ -632,7 +793,13 @@ export default function OrderClient({
       </div>
 
       {modalItem && (
-        <ItemSheet key={modalItem.id} item={modalItem} onClose={() => setModalItem(null)} onAdd={addToCart} />
+        <ItemSheet
+          key={modalItem.id}
+          item={modalItem}
+          dailySoupOptions={dailySoupOptions}
+          onClose={() => setModalItem(null)}
+          onAdd={addToCart}
+        />
       )}
 
       {itemCount > 0 && (
