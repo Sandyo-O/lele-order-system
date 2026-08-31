@@ -264,17 +264,25 @@ function ItemSheet({
             </div>
           )}
 
+          {hasCombo && variant === "combo" && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              套餐內容：白飯、兩樣配菜、開胃小菜、例湯
+            </p>
+          )}
+
           {availableAddOns.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-neutral-700 mb-2">加購選項</p>
+              <p className="text-sm font-semibold text-neutral-800 mb-2">加購選項</p>
               <div className="space-y-2">
                 {availableAddOns.map((a) => {
                   const checked = selectedAddOns.some((s) => s.name === a.name);
                   return (
                     <label
                       key={a.name}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm cursor-pointer ${
-                        checked ? "border-amber-500 bg-amber-50" : "border-neutral-200"
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-sm font-medium cursor-pointer ${
+                        checked
+                          ? "border-amber-500 bg-amber-50 text-amber-900"
+                          : "border-neutral-300 bg-white text-neutral-800"
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -282,11 +290,11 @@ function ItemSheet({
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleAddOn(a)}
-                          className="accent-amber-600"
+                          className="accent-amber-600 w-4 h-4"
                         />
                         {a.name}
                       </span>
-                      <span className="text-neutral-500">+${a.price}</span>
+                      <span className="text-neutral-700 font-semibold">+${a.price}</span>
                     </label>
                   );
                 })}
@@ -295,17 +303,17 @@ function ItemSheet({
           )}
 
           <div className="flex items-center justify-between pt-1">
-            <span className="text-sm font-medium text-neutral-700">數量</span>
+            <span className="text-sm font-semibold text-neutral-800">數量</span>
             <div className="flex items-center gap-3">
               <button
-                className="w-9 h-9 rounded-full border border-neutral-300 text-lg leading-none"
+                className="w-9 h-9 rounded-full border-2 border-amber-300 bg-amber-50 text-amber-800 text-lg font-semibold leading-none flex items-center justify-center"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               >
                 −
               </button>
-              <span className="w-6 text-center font-medium">{quantity}</span>
+              <span className="w-6 text-center font-semibold text-neutral-900">{quantity}</span>
               <button
-                className="w-9 h-9 rounded-full border border-neutral-300 text-lg leading-none"
+                className="w-9 h-9 rounded-full border-2 border-amber-300 bg-amber-50 text-amber-800 text-lg font-semibold leading-none flex items-center justify-center"
                 onClick={() => setQuantity((q) => Math.min(20, q + 1))}
               >
                 +
