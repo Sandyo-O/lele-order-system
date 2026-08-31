@@ -1,0 +1,76 @@
+// Production database: Supabase Postgres. DATABASE_URL should be the pooled
+// connection string (port 6543, ?pgbouncer=true) and DIRECT_URL the direct
+// connection (port 5432) that Prisma uses to run migrations.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  sortOrder Int        @default(0)
+  isDaily   Boolean    @default(false) // true for the "今日特餐" bucket
+  items     MenuItem[]
+}
+
+model MenuItem {
+  id             String   @id @default(cuid())
+  categoryId     String
+  category       Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name           String
+  singlePrice    Int? // 單點/單品價格
+  comboPrice     Int? // 套餐價格 (null if this item has no combo option)
+  isMarketPrice  Boolean  @default(false) // 時價 / 自選, price shown as "請洽櫃台"
+  tags           String? // comma-separated codes: 調,強,孕,產,復
+  addOns         String? // JSON string: [{"name":"加麵線","price":30}]
+  note           String?
+  isAvailable    Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orderItems     OrderItem[]
+}
+
+model RestaurantTable {
+  id        String  @id @default(cuid())
+  number    Int     @unique
+  label     String?
+  orders    Order[]
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  tableId     String
+  table       RestaurantTable @relation(fields: [tableId], references: [id])
+  status      String      @default("pending") // pending | paid | cancelled
+  totalPrice  Int
+  note        String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id             String    @id @default(cuid())
+  orderId        String
+  order          Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId     String?
+  menuItem       MenuItem? @relation(fields: [menuItemId], references: [id])
+  nameSnapshot   String
+  priceSnapshot  Int
+  quantity       Int       @default(1)
+  selectedAddOns String? // JSON string: [{"name":"加麵線","price":30}]
+  variant        String? // "single" | "combo" | null
+  note           String?
+}
+
+model Setting {
+  key   String @id
+  value String
+}
