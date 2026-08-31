@@ -78,15 +78,15 @@ function TagBadges({ tags }: { tags: string | null }) {
 function PriceLine({ item }: { item: MenuItemView }) {
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
   const orderable = item.singlePrice !== null || item.comboPrice !== null;
-  if (!orderable) return <p className="text-neutral-400 text-sm mt-1">請洽櫃台</p>;
+  if (!orderable) return <p className="text-stone-400 text-sm mt-1">請洽櫃台</p>;
   if (hasCombo) {
     return (
-      <p className="text-amber-700 font-semibold text-sm mt-1">
+      <p className="text-red-700 font-semibold text-sm mt-1">
         單點 {formatPrice(item.singlePrice)} ・ 套餐 {formatPrice(item.comboPrice)}
       </p>
     );
   }
-  return <p className="text-amber-700 font-semibold text-sm mt-1">{formatPrice(item.singlePrice)}</p>;
+  return <p className="text-red-700 font-semibold text-sm mt-1">{formatPrice(item.singlePrice)}</p>;
 }
 
 function Stepper({
@@ -99,9 +99,9 @@ function Stepper({
   onDecrement: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2 bg-amber-600 rounded-full px-1 py-1 shrink-0">
+    <div className="flex items-center gap-2 bg-red-600 rounded-full px-1 py-1 shrink-0">
       <button
-        className="w-7 h-7 rounded-full bg-white text-amber-700 text-lg leading-none flex items-center justify-center"
+        className="w-7 h-7 rounded-full bg-white text-red-700 text-lg leading-none flex items-center justify-center"
         onClick={onDecrement}
         aria-label="減少"
       >
@@ -109,7 +109,7 @@ function Stepper({
       </button>
       <span className="w-4 text-center text-white font-medium text-sm">{quantity}</span>
       <button
-        className="w-7 h-7 rounded-full bg-white text-amber-700 text-lg leading-none flex items-center justify-center"
+        className="w-7 h-7 rounded-full bg-white text-red-700 text-lg leading-none flex items-center justify-center"
         onClick={onIncrement}
         aria-label="增加"
       >
@@ -122,7 +122,7 @@ function Stepper({
 function PlusButton({ onClick, badge }: { onClick: () => void; badge?: number }) {
   return (
     <button
-      className="relative w-9 h-9 rounded-full bg-amber-600 text-white text-2xl leading-none flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-transform"
+      className="relative w-9 h-9 rounded-full bg-red-600 text-white text-2xl leading-none flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-transform"
       onClick={onClick}
       aria-label="加入購物車"
     >
@@ -156,18 +156,18 @@ function ItemRow({
   const orderable = item.singlePrice !== null || item.comboPrice !== null;
 
   return (
-    <div className="flex items-center gap-3 py-3.5 border-b border-neutral-100 last:border-0">
+    <div className="flex items-center gap-3 py-3.5 border-b border-stone-100 last:border-0">
       <div
         className={`flex-1 min-w-0 ${orderable ? "cursor-pointer" : ""}`}
         onClick={() => orderable && onOpen()}
       >
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-medium text-neutral-900">{item.name}</span>
+          <span className="font-medium text-stone-900">{item.name}</span>
           <TagBadges tags={item.tags} />
         </div>
-        {item.note && <p className="text-xs text-neutral-400 mt-0.5">{item.note}</p>}
+        {item.note && <p className="text-xs text-stone-400 mt-0.5">{item.note}</p>}
         <PriceLine item={item} />
-        {orderable && <p className="text-[11px] text-neutral-400 mt-0.5">點一下可加備註</p>}
+        {orderable && <p className="text-[11px] text-stone-400 mt-0.5">點一下可加備註</p>}
       </div>
 
       {orderable &&
@@ -270,11 +270,11 @@ function ItemSheet({
         className="bg-white w-full max-w-md rounded-t-3xl p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto animate-sheet-up"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1.5 bg-neutral-200 rounded-full mx-auto mb-4" />
+        <div className="w-10 h-1.5 bg-stone-200 rounded-full mx-auto mb-4" />
         <div className="flex items-start justify-between gap-3 mb-1">
-          <h3 className="text-lg font-semibold text-neutral-900">{item.name}</h3>
+          <h3 className="text-lg font-semibold text-stone-900">{item.name}</h3>
           <button
-            className="text-neutral-400 text-xl leading-none w-7 h-7 flex items-center justify-center shrink-0"
+            className="text-stone-400 text-xl leading-none w-7 h-7 flex items-center justify-center shrink-0"
             onClick={onClose}
             aria-label="關閉"
           >
@@ -282,7 +282,7 @@ function ItemSheet({
           </button>
         </div>
         <TagBadges tags={item.tags} />
-        {item.note && <p className="text-xs text-neutral-400 mt-2">{item.note}</p>}
+        {item.note && <p className="text-xs text-stone-400 mt-2">{item.note}</p>}
 
         <div className="mt-4 space-y-4">
           {hasCombo && (
@@ -290,8 +290,8 @@ function ItemSheet({
               <button
                 className={`flex-1 px-3 py-2.5 rounded-xl text-sm border font-medium ${
                   variant === "single"
-                    ? "bg-amber-600 text-white border-amber-600"
-                    : "border-neutral-300 text-neutral-700"
+                    ? "bg-red-600 text-white border-red-600"
+                    : "border-stone-300 text-stone-700"
                 }`}
                 onClick={() => setVariant("single")}
               >
@@ -300,8 +300,8 @@ function ItemSheet({
               <button
                 className={`flex-1 px-3 py-2.5 rounded-xl text-sm border font-medium ${
                   variant === "combo"
-                    ? "bg-amber-600 text-white border-amber-600"
-                    : "border-neutral-300 text-neutral-700"
+                    ? "bg-red-600 text-white border-red-600"
+                    : "border-stone-300 text-stone-700"
                 }`}
                 onClick={() => setVariant("combo")}
               >
@@ -311,14 +311,14 @@ function ItemSheet({
           )}
 
           {hasCombo && variant === "combo" && (
-            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <p className="text-xs text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               套餐內容：白飯、兩樣配菜、開胃小菜、例湯
             </p>
           )}
 
           {showStaplePicker && stapleSwapAddOn && (
             <div>
-              <p className="text-sm font-semibold text-neutral-800 mb-2">主食（白飯／滷肉飯免費，換麵線加價）</p>
+              <p className="text-sm font-semibold text-stone-800 mb-2">主食（白飯／滷肉飯免費，換麵線加價）</p>
               <div className="flex gap-2 flex-wrap">
                 {[...STAPLE_OPTIONS, stapleSwapAddOn.name].map((name) => {
                   const active = staple === name;
@@ -328,8 +328,8 @@ function ItemSheet({
                       key={name}
                       className={`px-3 py-2 rounded-xl text-sm font-medium border-2 ${
                         active
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-neutral-300 bg-white text-neutral-800"
+                          ? "border-red-500 bg-red-50 text-red-900"
+                          : "border-stone-300 bg-white text-stone-800"
                       }`}
                       onClick={() => setStaple(name)}
                     >
@@ -347,8 +347,8 @@ function ItemSheet({
               <label
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-sm font-medium cursor-pointer ${
                   wantsDailySoup
-                    ? "border-amber-500 bg-amber-50 text-amber-900"
-                    : "border-neutral-300 bg-white text-neutral-800"
+                    ? "border-red-500 bg-red-50 text-red-900"
+                    : "border-stone-300 bg-white text-stone-800"
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -356,11 +356,11 @@ function ItemSheet({
                     type="checkbox"
                     checked={wantsDailySoup}
                     onChange={(e) => setWantsDailySoup(e.target.checked)}
-                    className="accent-amber-600 w-4 h-4"
+                    className="accent-red-600 w-4 h-4"
                   />
                   {dailySoupAddOn.name}
                 </span>
-                <span className="text-neutral-700 font-semibold">+${dailySoupAddOn.price}</span>
+                <span className="text-stone-700 font-semibold">+${dailySoupAddOn.price}</span>
               </label>
               {wantsDailySoup && (
                 <div className="mt-2 pl-2">
@@ -371,8 +371,8 @@ function ItemSheet({
                           key={flavor}
                           className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 ${
                             dailySoupFlavor === flavor
-                              ? "border-amber-500 bg-amber-100 text-amber-900"
-                              : "border-neutral-300 bg-white text-neutral-700"
+                              ? "border-red-500 bg-red-100 text-red-900"
+                              : "border-stone-300 bg-white text-stone-700"
                           }`}
                           onClick={() => setDailySoupFlavor(flavor)}
                         >
@@ -381,7 +381,7 @@ function ItemSheet({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-neutral-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
+                    <p className="text-xs text-stone-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
                   )}
                 </div>
               )}
@@ -390,7 +390,7 @@ function ItemSheet({
 
           {item.requiresDailySoupChoice && (
             <div>
-              <p className="text-sm font-semibold text-neutral-800 mb-2">請選擇今日雞湯口味</p>
+              <p className="text-sm font-semibold text-stone-800 mb-2">請選擇今日雞湯口味</p>
               {dailySoupOptions.length > 0 ? (
                 <div className="flex gap-2 flex-wrap">
                   {dailySoupOptions.map((flavor) => (
@@ -398,8 +398,8 @@ function ItemSheet({
                       key={flavor}
                       className={`px-3 py-2 rounded-xl text-sm font-medium border-2 ${
                         itemSoupFlavor === flavor
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-neutral-300 bg-white text-neutral-800"
+                          ? "border-red-500 bg-red-50 text-red-900"
+                          : "border-stone-300 bg-white text-stone-800"
                       }`}
                       onClick={() => setItemSoupFlavor(flavor)}
                     >
@@ -408,14 +408,14 @@ function ItemSheet({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-neutral-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
+                <p className="text-xs text-stone-400">今日雞湯口味尚未設定，送出後請跟店員確認</p>
               )}
             </div>
           )}
 
           {showAddOnsSection && regularAddOns.length > 0 && (
             <div>
-              <p className="text-sm font-semibold text-neutral-800 mb-2">加購選項</p>
+              <p className="text-sm font-semibold text-stone-800 mb-2">加購選項</p>
               <div className="space-y-2">
                 {regularAddOns.map((a) => {
                   const checked = selectedAddOns.some((s) => s.name === a.name);
@@ -424,8 +424,8 @@ function ItemSheet({
                       key={a.name}
                       className={`flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-sm font-medium cursor-pointer ${
                         checked
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-neutral-300 bg-white text-neutral-800"
+                          ? "border-red-500 bg-red-50 text-red-900"
+                          : "border-stone-300 bg-white text-stone-800"
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -433,11 +433,11 @@ function ItemSheet({
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleAddOn(a)}
-                          className="accent-amber-600 w-4 h-4"
+                          className="accent-red-600 w-4 h-4"
                         />
                         {a.name}
                       </span>
-                      <span className="text-neutral-700 font-semibold">+${a.price}</span>
+                      <span className="text-stone-700 font-semibold">+${a.price}</span>
                     </label>
                   );
                 })}
@@ -446,11 +446,11 @@ function ItemSheet({
           )}
 
           <div>
-            <label className="text-sm font-semibold text-neutral-800 mb-2 block">
+            <label className="text-sm font-semibold text-stone-800 mb-2 block">
               備註（例如：不辣、少油）
             </label>
             <textarea
-              className="w-full border-2 border-neutral-300 rounded-xl p-2.5 text-sm text-neutral-900"
+              className="w-full border-2 border-stone-300 rounded-xl p-2.5 text-sm text-stone-900"
               rows={2}
               value={customNote}
               onChange={(e) => setCustomNote(e.target.value)}
@@ -459,17 +459,17 @@ function ItemSheet({
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <span className="text-sm font-semibold text-neutral-800">數量</span>
+            <span className="text-sm font-semibold text-stone-800">數量</span>
             <div className="flex items-center gap-3">
               <button
-                className="w-9 h-9 rounded-full border-2 border-amber-300 bg-amber-50 text-amber-800 text-lg font-semibold leading-none flex items-center justify-center"
+                className="w-9 h-9 rounded-full border-2 border-red-300 bg-red-50 text-red-800 text-lg font-semibold leading-none flex items-center justify-center"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               >
                 −
               </button>
-              <span className="w-6 text-center font-semibold text-neutral-900">{quantity}</span>
+              <span className="w-6 text-center font-semibold text-stone-900">{quantity}</span>
               <button
-                className="w-9 h-9 rounded-full border-2 border-amber-300 bg-amber-50 text-amber-800 text-lg font-semibold leading-none flex items-center justify-center"
+                className="w-9 h-9 rounded-full border-2 border-red-300 bg-red-50 text-red-800 text-lg font-semibold leading-none flex items-center justify-center"
                 onClick={() => setQuantity((q) => Math.min(20, q + 1))}
               >
                 +
@@ -478,7 +478,7 @@ function ItemSheet({
           </div>
 
           <button
-            className="w-full bg-amber-600 text-white text-base font-semibold py-3.5 rounded-full mt-2"
+            className="w-full bg-red-600 text-white text-base font-semibold py-3.5 rounded-full mt-2"
             onClick={handleAdd}
           >
             加入購物車 ・ ${unitPrice * quantity}
@@ -632,15 +632,15 @@ export default function OrderClient({
 
   if (view === "success") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4 bg-gradient-to-b from-amber-50 to-white">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4 bg-gradient-to-b from-red-50 to-white">
         <div className="text-6xl">✅</div>
         <h1 className="text-xl font-semibold">訂單已送出！</h1>
-        <p className="text-neutral-600">
-          桌號 {tableNumber}，消費金額 <span className="font-semibold text-amber-700">${successTotal}</span>
+        <p className="text-stone-600">
+          桌號 {tableNumber}，消費金額 <span className="font-semibold text-red-700">${successTotal}</span>
         </p>
-        <p className="text-neutral-500 text-sm">請至櫃台結帳，謝謝！</p>
+        <p className="text-stone-500 text-sm">請至櫃台結帳，謝謝！</p>
         <button
-          className="mt-4 bg-amber-600 text-white px-6 py-2.5 rounded-full font-medium shadow-sm"
+          className="mt-4 bg-red-600 text-white px-6 py-2.5 rounded-full font-medium shadow-sm"
           onClick={() => setView("menu")}
         >
           繼續加點
@@ -652,8 +652,8 @@ export default function OrderClient({
   if (view === "cart") {
     return (
       <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-        <header className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3 flex items-center gap-3 z-20">
-          <button className="text-neutral-600 text-sm" onClick={() => setView("menu")}>
+        <header className="sticky top-0 bg-white border-b border-stone-200 px-4 py-3 flex items-center gap-3 z-20">
+          <button className="text-stone-600 text-sm" onClick={() => setView("menu")}>
             ← 返回菜單
           </button>
           <h1 className="font-semibold">購物車</h1>
@@ -661,23 +661,23 @@ export default function OrderClient({
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {cart.length === 0 ? (
-            <p className="text-neutral-400 text-center mt-10">購物車是空的</p>
+            <p className="text-stone-400 text-center mt-10">購物車是空的</p>
           ) : (
             <ul className="space-y-3">
               {cart.map((l) => (
                 <li
                   key={l.key}
-                  className="flex items-center justify-between border border-neutral-100 rounded-xl px-3 py-3"
+                  className="flex items-center justify-between border border-stone-100 rounded-xl px-3 py-3"
                 >
                   <div>
                     <div className="font-medium">{l.name}</div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-stone-500">
                       {l.variant === "combo" ? "套餐" : l.variant === "single" ? "單點" : ""}
                       {l.selectedAddOns.length > 0 &&
                         ` ・ ${l.selectedAddOns.map((a) => a.name).join("、")}`}
                     </div>
-                    {l.note && <div className="text-xs text-amber-700 mt-0.5">備註：{l.note}</div>}
-                    <div className="text-sm text-amber-700 font-medium">
+                    {l.note && <div className="text-xs text-red-700 mt-0.5">備註：{l.note}</div>}
+                    <div className="text-sm text-red-700 font-medium">
                       ${l.unitPrice} x {l.quantity}
                     </div>
                   </div>
@@ -693,9 +693,9 @@ export default function OrderClient({
 
           {cart.length > 0 && (
             <div className="mt-4">
-              <label className="text-sm text-neutral-600 block mb-1">備註（例如：不辣、加湯）</label>
+              <label className="text-sm text-stone-600 block mb-1">備註（例如：不辣、加湯）</label>
               <textarea
-                className="w-full border border-neutral-300 rounded-lg p-2 text-sm"
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm"
                 rows={2}
                 value={orderNoteInput}
                 onChange={(e) => setOrderNoteInput(e.target.value)}
@@ -705,14 +705,14 @@ export default function OrderClient({
         </div>
 
         {cart.length > 0 && (
-          <div className="border-t border-neutral-200 p-4 space-y-2">
+          <div className="border-t border-stone-200 p-4 space-y-2">
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <div className="flex items-center justify-between font-semibold">
               <span>總計</span>
-              <span className="text-amber-700">${total}</span>
+              <span className="text-red-700">${total}</span>
             </div>
             <button
-              className="w-full bg-amber-600 text-white py-3 rounded-full font-medium disabled:opacity-50"
+              className="w-full bg-red-600 text-white py-3 rounded-full font-medium disabled:opacity-50"
               onClick={submitOrder}
               disabled={submitting}
             >
@@ -725,17 +725,17 @@ export default function OrderClient({
   }
 
   return (
-    <div className="flex-1 flex flex-col max-w-md mx-auto w-full pb-28 bg-neutral-50">
-      <header className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 pt-4 pb-3 z-20 shadow-sm">
+    <div className="flex-1 flex flex-col max-w-md mx-auto w-full pb-28 bg-stone-50">
+      <header className="sticky top-0 bg-gradient-to-r from-red-900 to-red-700 text-white px-4 pt-4 pb-3 z-20 shadow-sm">
         <h1 className="font-bold text-lg">{storeName}</h1>
-        <p className="text-sm text-amber-50/90">
+        <p className="text-sm text-red-50/90">
           桌號 {tableNumber}
           {tableLabel ? `（${tableLabel}）` : ""}
         </p>
-        {orderNote && <p className="text-xs text-amber-50/70 mt-1">{orderNote}</p>}
+        {orderNote && <p className="text-xs text-red-50/70 mt-1">{orderNote}</p>}
       </header>
 
-      <nav className="sticky top-[76px] bg-neutral-50/95 backdrop-blur border-b border-neutral-200 z-10 overflow-x-auto no-scrollbar">
+      <nav className="sticky top-[76px] bg-stone-50/95 backdrop-blur border-b border-stone-200 z-10 overflow-x-auto no-scrollbar">
         <div className="flex gap-2 px-4 py-2 w-max">
           {categories.map((cat) => (
             <button
@@ -746,8 +746,8 @@ export default function OrderClient({
               onClick={() => scrollToCategory(cat.id)}
               className={`px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 activeCategory === cat.id
-                  ? "bg-amber-600 text-white"
-                  : "bg-white text-neutral-600 border border-neutral-200"
+                  ? "bg-red-600 text-white"
+                  : "bg-white text-stone-600 border border-stone-200"
               }`}
             >
               {categoryIcon(cat.name)} {cat.name}
@@ -766,10 +766,10 @@ export default function OrderClient({
             }}
             className="mt-4 scroll-mt-[132px]"
           >
-            <h2 className="text-neutral-800 font-bold mb-1 flex items-center gap-1.5">
+            <h2 className="text-stone-800 font-bold mb-1 flex items-center gap-1.5">
               <span>{categoryIcon(cat.name)}</span> {cat.name}
             </h2>
-            <div className="bg-white rounded-2xl px-3 shadow-sm border border-neutral-100">
+            <div className="bg-white rounded-2xl px-3 shadow-sm border border-stone-100">
               {cat.items.map((item) => {
                 const simpleKey = lineKey(item.id, null, []);
                 const cartLine = cart.find((l) => l.key === simpleKey);
@@ -804,7 +804,7 @@ export default function OrderClient({
 
       {itemCount > 0 && (
         <button
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-amber-600 text-white py-3.5 rounded-full font-medium shadow-lg flex items-center justify-between px-5 z-30"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-red-600 text-white py-3.5 rounded-full font-medium shadow-lg flex items-center justify-between px-5 z-30"
           onClick={() => setView("cart")}
         >
           <span>🛒 {itemCount} 項</span>

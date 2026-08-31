@@ -32,10 +32,10 @@ export function parseTags(tags: string | null | undefined): string[] {
 }
 
 export const TAG_LABELS: Record<string, { label: string; color: string }> = {
-  調: { label: "調理氣血", color: "#d97706" },
-  強: { label: "顧筋骨、增強免疫力", color: "#2563eb" },
+  調: { label: "調理氣血", color: "#b45309" },
+  強: { label: "顧筋骨、增強免疫力", color: "#0d9488" },
   孕: { label: "孕期媽咪", color: "#db2777" },
-  產: { label: "坐月子媽咪", color: "#dc2626" },
+  產: { label: "坐月子媽咪", color: "#92400e" },
   復: { label: "術後病後", color: "#7c3aed" },
 };
 
