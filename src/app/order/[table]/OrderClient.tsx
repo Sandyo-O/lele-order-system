@@ -115,7 +115,7 @@ function TagBadges({ tags }: { tags: string | null }) {
               {t}
             </button>
             {openTag === t && (
-              <span className="absolute z-40 top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap bg-stone-900 text-white text-[11px] px-2 py-1 rounded-md shadow-lg">
+              <span className="fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[80vw] text-center bg-stone-900/95 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl">
                 {t}：{info?.label ?? t}
               </span>
             )}
@@ -128,14 +128,18 @@ function TagBadges({ tags }: { tags: string | null }) {
 
 function PriceLine({ item }: { item: MenuItemView }) {
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
+  const hasBothVariants = hasCombo && item.singlePrice !== null && item.singlePrice !== undefined;
   const orderable = item.singlePrice !== null || item.comboPrice !== null;
   if (!orderable) return <p className="text-stone-400 text-sm mt-1">請洽櫃台</p>;
-  if (hasCombo) {
+  if (hasBothVariants) {
     return (
       <p className="text-red-700 font-semibold text-sm mt-1">
         單點 {formatPrice(item.singlePrice)} ・ 套餐 {formatPrice(item.comboPrice)}
       </p>
     );
+  }
+  if (hasCombo) {
+    return <p className="text-red-700 font-semibold text-sm mt-1">{formatPrice(item.comboPrice)}</p>;
   }
   return <p className="text-red-700 font-semibold text-sm mt-1">{formatPrice(item.singlePrice)}</p>;
 }
@@ -260,7 +264,8 @@ function ItemSheet({
   const itemDailyOptions = item.dailyChoiceType ? dailyOptionsByType[item.dailyChoiceType] : [];
 
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
-  const isDiscountStyle = hasCombo && item.singleVariantStyle === "discount";
+  const hasBothVariants = hasCombo && item.singlePrice !== null && item.singlePrice !== undefined;
+  const isDiscountStyle = hasBothVariants && item.singleVariantStyle === "discount";
   const [variant, setVariant] = useState<"single" | "combo">(hasCombo ? "combo" : "single");
   const [staple, setStaple] = useState<string>(STAPLE_OPTIONS[0]);
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
@@ -346,7 +351,7 @@ function ItemSheet({
         {item.note && <p className="text-xs text-stone-400 mt-2">{item.note}</p>}
 
         <div className="mt-4 space-y-4">
-          {hasCombo && !isDiscountStyle && (
+          {hasBothVariants && !isDiscountStyle && (
             <div className="flex gap-2">
               <button
                 className={`flex-1 px-3 py-2.5 rounded-xl text-sm border font-medium ${

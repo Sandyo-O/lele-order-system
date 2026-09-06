@@ -174,24 +174,22 @@ export async function deleteTable(formData: FormData) {
 }
 
 export async function updateSettings(formData: FormData) {
-  const keys = [
-    "storeName",
-    "phone",
-    "address",
-    "hours",
-    "closedDays",
-    "orderNote",
-    "dailySoupOptions",
-    "dailyVegOptions",
-  ];
-  await Promise.all(
-    keys.map((key) =>
+  const keys = ["storeName", "phone", "address", "hours", "closedDays", "orderNote", "dailyVegOptions"];
+  const dailySoupOptions = formData.getAll("dailySoupOptions").map(String).join("\n");
+
+  await Promise.all([
+    ...keys.map((key) =>
       prisma.setting.upsert({
         where: { key },
         update: { value: String(formData.get(key) ?? "") },
         create: { key, value: String(formData.get(key) ?? "") },
       })
-    )
-  );
+    ),
+    prisma.setting.upsert({
+      where: { key: "dailySoupOptions" },
+      update: { value: dailySoupOptions },
+      create: { key: "dailySoupOptions", value: dailySoupOptions },
+    }),
+  ]);
   revalidatePath("/admin/settings");
 }

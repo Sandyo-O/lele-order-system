@@ -128,10 +128,8 @@ async function main() {
           },
           {
             name: "小雞湯特餐",
-            singlePrice: 100,
             comboPrice: 150,
             dailyChoiceType: "soup",
-            singleVariantStyle: "discount",
             sortOrder: 6,
           },
         ],
