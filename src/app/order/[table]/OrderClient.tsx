@@ -29,6 +29,34 @@ type MenuItemView = {
 
 type CategoryView = { id: string; name: string; items: MenuItemView[] };
 
+type HistoryOrder = {
+  id: string;
+  createdAt: string;
+  totalPrice: number;
+  items: {
+    name: string;
+    variant: "single" | "combo" | null;
+    quantity: number;
+    unitPrice: number;
+    selectedAddOns: AddOn[];
+    note: string | null;
+  }[];
+};
+
+function isToday(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+}
+
 type CartLine = {
   key: string;
   menuItemId: string;
@@ -59,19 +87,38 @@ function categoryIcon(name: string) {
 
 function TagBadges({ tags }: { tags: string | null }) {
   const list = parseTags(tags);
+  const [openTag, setOpenTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!openTag) return;
+    const timer = setTimeout(() => setOpenTag(null), 3000);
+    return () => clearTimeout(timer);
+  }, [openTag]);
+
   if (list.length === 0) return null;
   return (
     <span className="flex gap-1 flex-wrap">
       {list.map((t) => {
         const info = TAG_LABELS[t];
         return (
-          <span
-            key={t}
-            title={info?.label ?? t}
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-white leading-none"
-            style={{ backgroundColor: info?.color ?? "#6b7280" }}
-          >
-            {t}
+          <span key={t} className="relative">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenTag((cur) => (cur === t ? null : t));
+              }}
+              title={info?.label ?? t}
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-white leading-none"
+              style={{ backgroundColor: info?.color ?? "#6b7280" }}
+            >
+              {t}
+            </button>
+            {openTag === t && (
+              <span className="absolute z-40 top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap bg-stone-900 text-white text-[11px] px-2 py-1 rounded-md shadow-lg">
+                {t}：{info?.label ?? t}
+              </span>
+            )}
           </span>
         );
       })}
@@ -542,13 +589,30 @@ export default function OrderClient({
   dailyOptionsByType: Record<"soup" | "vegetable", string[]>;
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [view, setView] = useState<"menu" | "cart" | "success">("menu");
+  const [view, setView] = useState<"menu" | "cart" | "success" | "history">("menu");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successTotal, setSuccessTotal] = useState<number | null>(null);
   const [orderNoteInput, setOrderNoteInput] = useState("");
   const [modalItem, setModalItem] = useState<MenuItemView | null>(null);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id);
+  const [history, setHistory] = useState<HistoryOrder[]>([]);
+
+  const historyKey = `lele_history_table_${tableNumber}`;
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(historyKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from localStorage, which isn't available during SSR
+      if (raw) setHistory(JSON.parse(raw));
+    } catch {
+      // ignore corrupted/inaccessible local storage
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const todayHistory = history.filter((h) => isToday(h.createdAt));
+  const todayHistoryTotal = todayHistory.reduce((sum, h) => sum + h.totalPrice, 0);
 
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const pillRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -669,6 +733,30 @@ export default function OrderClient({
         return;
       }
       setSuccessTotal(data.order.totalPrice);
+
+      const historyEntry: HistoryOrder = {
+        id: data.order.id,
+        createdAt: data.order.createdAt,
+        totalPrice: data.order.totalPrice,
+        items: cart.map((l) => ({
+          name: l.name,
+          variant: l.variant,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          selectedAddOns: l.selectedAddOns,
+          note: l.note || null,
+        })),
+      };
+      setHistory((prev) => {
+        const next = [historyEntry, ...prev];
+        try {
+          window.localStorage.setItem(historyKey, JSON.stringify(next));
+        } catch {
+          // localStorage unavailable (private mode, quota, etc.) - history just won't persist
+        }
+        return next;
+      });
+
       setCart([]);
       setOrderNoteInput("");
       setView("success");
@@ -688,12 +776,78 @@ export default function OrderClient({
           桌號 {tableNumber}，消費金額 <span className="font-semibold text-red-700">${successTotal}</span>
         </p>
         <p className="text-stone-500 text-sm">請至櫃台結帳，謝謝！</p>
-        <button
-          className="mt-4 bg-red-600 text-white px-6 py-2.5 rounded-full font-medium shadow-sm"
-          onClick={() => setView("menu")}
-        >
-          繼續加點
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button
+            className="bg-red-600 text-white px-6 py-2.5 rounded-full font-medium shadow-sm"
+            onClick={() => setView("menu")}
+          >
+            繼續加點
+          </button>
+          <button
+            className="border border-red-300 text-red-700 px-6 py-2.5 rounded-full font-medium"
+            onClick={() => setView("history")}
+          >
+            查看今天點餐紀錄
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "history") {
+    return (
+      <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+        <header className="sticky top-0 bg-white border-b border-stone-200 px-4 py-3 flex items-center gap-3 z-20">
+          <button className="text-stone-600 text-sm" onClick={() => setView("menu")}>
+            ← 返回菜單
+          </button>
+          <h1 className="font-semibold">今天的點餐紀錄（桌號 {tableNumber}）</h1>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {todayHistory.length === 0 ? (
+            <p className="text-stone-400 text-center mt-10">這支手機今天還沒有點過餐</p>
+          ) : (
+            <ul className="space-y-3">
+              {todayHistory.map((h) => (
+                <li key={h.id} className="border border-stone-200 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-stone-400">{formatTime(h.createdAt)} 送出</span>
+                    <span className="text-sm font-semibold text-red-700">${h.totalPrice}</span>
+                  </div>
+                  <ul className="text-sm text-stone-700 space-y-0.5">
+                    {h.items.map((it, i) => (
+                      <li key={i}>
+                        {it.name}
+                        {it.variant === "combo" ? "（套餐）" : it.variant === "single" ? "（單點）" : ""}
+                        {it.selectedAddOns.length > 0 &&
+                          ` +${it.selectedAddOns.map((a) => a.name).join("、")}`}
+                        {it.note ? `（${it.note}）` : ""}
+                        {" x"}
+                        {it.quantity}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {todayHistory.length > 0 && (
+          <div className="border-t border-stone-200 p-4 space-y-2">
+            <div className="flex items-center justify-between font-semibold">
+              <span>今天累計消費</span>
+              <span className="text-red-700">${todayHistoryTotal}</span>
+            </div>
+            <button
+              className="w-full bg-red-600 text-white py-3 rounded-full font-medium"
+              onClick={() => setView("menu")}
+            >
+              繼續加點
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -705,7 +859,15 @@ export default function OrderClient({
           <button className="text-stone-600 text-sm" onClick={() => setView("menu")}>
             ← 返回菜單
           </button>
-          <h1 className="font-semibold">購物車</h1>
+          <h1 className="font-semibold flex-1">購物車</h1>
+          {todayHistory.length > 0 && (
+            <button
+              className="text-xs text-red-700 underline shrink-0"
+              onClick={() => setView("history")}
+            >
+              今天點過 {todayHistory.length} 筆
+            </button>
+          )}
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -777,11 +939,23 @@ export default function OrderClient({
     <div className="flex-1 flex flex-col max-w-md mx-auto w-full pb-28 bg-stone-50">
       <div ref={stickyRef} className="sticky top-0 z-20 shadow-sm">
         <header className="bg-gradient-to-r from-red-900 to-red-700 text-white px-4 pt-4 pb-3">
-          <h1 className="font-bold text-lg">{storeName}</h1>
-          <p className="text-sm text-red-50/90">
-            桌號 {tableNumber}
-            {tableLabel ? `（${tableLabel}）` : ""}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="font-bold text-lg">{storeName}</h1>
+              <p className="text-sm text-red-50/90">
+                桌號 {tableNumber}
+                {tableLabel ? `（${tableLabel}）` : ""}
+              </p>
+            </div>
+            {todayHistory.length > 0 && (
+              <button
+                className="shrink-0 bg-white/15 border border-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full"
+                onClick={() => setView("history")}
+              >
+                📋 今天 {todayHistory.length} 筆
+              </button>
+            )}
+          </div>
           {orderNote && <p className="text-xs text-red-50/70 mt-1">{orderNote}</p>}
         </header>
 
