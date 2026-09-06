@@ -25,6 +25,7 @@ type MenuItemView = {
   note: string | null;
   dailyChoiceType: DailyChoiceType;
   singleVariantStyle: string;
+  isAvailable: boolean;
 };
 
 type CategoryView = { id: string; name: string; items: MenuItemView[] };
@@ -88,11 +89,38 @@ function categoryIcon(name: string) {
 function TagBadges({ tags }: { tags: string | null }) {
   const list = parseTags(tags);
   const [openTag, setOpenTag] = useState<string | null>(null);
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number } | null>(null);
+  const badgeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const popupRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!openTag) return;
     const timer = setTimeout(() => setOpenTag(null), 3000);
     return () => clearTimeout(timer);
+  }, [openTag]);
+
+  useLayoutEffect(() => {
+    // Two-pass tooltip positioning: measure the badge and the already-rendered
+    // popup, then clamp its coordinates to stay on screen. Can't compute this
+    // during render since it depends on actual DOM layout.
+    if (!openTag) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPopupPos(null);
+      return;
+    }
+    const badge = badgeRefs.current[openTag];
+    const popup = popupRef.current;
+    if (!badge || !popup) return;
+    const badgeRect = badge.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    const margin = 8;
+    let left = badgeRect.left + badgeRect.width / 2 - popupRect.width / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - popupRect.width - margin));
+    let top = badgeRect.bottom + 6;
+    if (top + popupRect.height + margin > window.innerHeight) {
+      top = badgeRect.top - popupRect.height - 6;
+    }
+    setPopupPos({ top, left });
   }, [openTag]);
 
   if (list.length === 0) return null;
@@ -101,27 +129,33 @@ function TagBadges({ tags }: { tags: string | null }) {
       {list.map((t) => {
         const info = TAG_LABELS[t];
         return (
-          <span key={t} className="relative">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenTag((cur) => (cur === t ? null : t));
-              }}
-              title={info?.label ?? t}
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-white leading-none"
-              style={{ backgroundColor: info?.color ?? "#6b7280" }}
-            >
-              {t}
-            </button>
-            {openTag === t && (
-              <span className="fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[80vw] text-center bg-stone-900/95 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl">
-                {t}：{info?.label ?? t}
-              </span>
-            )}
-          </span>
+          <button
+            key={t}
+            type="button"
+            ref={(el) => {
+              badgeRefs.current[t] = el;
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenTag((cur) => (cur === t ? null : t));
+            }}
+            title={info?.label ?? t}
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-white leading-none"
+            style={{ backgroundColor: info?.color ?? "#6b7280" }}
+          >
+            {t}
+          </button>
         );
       })}
+      {openTag && (
+        <span
+          ref={popupRef}
+          className="fixed z-[60] whitespace-nowrap bg-stone-900 text-white text-xs px-2.5 py-1.5 rounded-lg shadow-lg"
+          style={popupPos ? { top: popupPos.top, left: popupPos.left } : { top: -9999, left: -9999 }}
+        >
+          {openTag}：{TAG_LABELS[openTag]?.label ?? openTag}
+        </span>
+      )}
     </span>
   );
 }
@@ -207,10 +241,14 @@ function ItemRow({
   const availableAddOns = useMemo(() => parseAddOns(item.addOns), [item.addOns]);
   const hasCombo = item.comboPrice !== null && item.comboPrice !== undefined;
   const isSimple = !hasCombo && !item.dailyChoiceType && availableAddOns.length === 0;
-  const orderable = item.singlePrice !== null || item.comboPrice !== null;
+  const orderable = item.isAvailable && (item.singlePrice !== null || item.comboPrice !== null);
 
   return (
-    <div className="flex items-center gap-3 py-3.5 border-b border-stone-100 last:border-0">
+    <div
+      className={`flex items-center gap-3 py-3.5 border-b border-stone-100 last:border-0 ${
+        item.isAvailable ? "" : "opacity-50"
+      }`}
+    >
       <div
         className={`flex-1 min-w-0 ${orderable ? "cursor-pointer" : ""}`}
         onClick={() => orderable && onOpen()}
@@ -220,8 +258,14 @@ function ItemRow({
           <TagBadges tags={item.tags} />
         </div>
         {item.note && <p className="text-xs text-stone-400 mt-0.5">{item.note}</p>}
-        <PriceLine item={item} />
-        {orderable && <p className="text-[11px] text-stone-400 mt-0.5">點一下可加備註</p>}
+        {item.isAvailable ? (
+          <>
+            <PriceLine item={item} />
+            {orderable && <p className="text-[11px] text-stone-400 mt-0.5">點一下可加備註</p>}
+          </>
+        ) : (
+          <p className="text-stone-500 text-sm font-medium mt-1">暫停供應</p>
+        )}
       </div>
 
       {orderable &&

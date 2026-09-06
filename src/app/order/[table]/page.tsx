@@ -21,7 +21,6 @@ export default async function OrderPage({
       orderBy: { sortOrder: "asc" },
       include: {
         items: {
-          where: { isAvailable: true },
           orderBy: { sortOrder: "asc" },
         },
       },
@@ -50,6 +49,7 @@ export default async function OrderPage({
           ? item.dailyChoiceType
           : null) as "soup" | "vegetable" | null,
         singleVariantStyle: item.singleVariantStyle,
+        isAvailable: item.isAvailable,
       })),
     }));
 

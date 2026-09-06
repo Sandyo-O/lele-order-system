@@ -134,7 +134,7 @@ export default async function AdminMenuPage() {
                           name="isAvailable"
                           defaultChecked={item.isAvailable}
                         />
-                        上架中（取消勾選 = 暫停供應）
+                        上架中（取消勾選 = 菜單上會反灰顯示「暫停供應」，客人看得到但點不了）
                       </label>
                       <div className="flex gap-2">
                         <label className="block flex-1">
@@ -159,6 +159,9 @@ export default async function AdminMenuPage() {
                             <option value="soup">今日雞湯口味</option>
                             <option value="vegetable">今日蔬菜</option>
                           </select>
+                          <span className="text-xs text-neutral-400">
+                            今天實際有哪些口味/蔬菜，去「店家設定」勾選
+                          </span>
                         </label>
                       </div>
                       <div>
@@ -266,6 +269,9 @@ export default async function AdminMenuPage() {
                     <option value="soup">今日雞湯口味</option>
                     <option value="vegetable">今日蔬菜</option>
                   </select>
+                  <span className="text-xs text-neutral-400">
+                    今天實際有哪些口味/蔬菜，去「店家設定」勾選
+                  </span>
                 </label>
               </div>
               <div>
