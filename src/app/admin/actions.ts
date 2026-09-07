@@ -61,12 +61,18 @@ function dailyChoiceTypeOrNull(value: FormDataEntryValue | null): string | null 
   return str === "soup" || str === "vegetable" ? str : null;
 }
 
-export async function createCategory(formData: FormData) {
+export type ActionResult = { ok: boolean; message?: string } | null;
+
+export async function createCategory(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
+  if (!name) return { ok: false, message: "請輸入分類名稱" };
   const count = await prisma.category.count();
   await prisma.category.create({ data: { name, sortOrder: count + 1 } });
   revalidatePath("/admin");
+  return { ok: true, message: "已新增分類" };
 }
 
 export async function deleteCategory(formData: FormData) {
@@ -76,10 +82,13 @@ export async function deleteCategory(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export async function createMenuItem(formData: FormData) {
+export async function createMenuItem(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const categoryId = String(formData.get("categoryId") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!categoryId || !name) return;
+  if (!categoryId || !name) return { ok: false, message: "請輸入品名" };
 
   const tags = formData.getAll("tags").map(String).join(",");
   const count = await prisma.menuItem.count({ where: { categoryId } });
@@ -100,12 +109,16 @@ export async function createMenuItem(formData: FormData) {
     },
   });
   revalidatePath("/admin");
+  return { ok: true, message: "已新增品項" };
 }
 
-export async function updateMenuItem(formData: FormData) {
+export async function updateMenuItem(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return;
+  if (!id || !name) return { ok: false, message: "請輸入品名" };
 
   const tags = formData.getAll("tags").map(String).join(",");
 
@@ -125,6 +138,7 @@ export async function updateMenuItem(formData: FormData) {
     },
   });
   revalidatePath("/admin");
+  return { ok: true, message: "已儲存" };
 }
 
 export async function deleteMenuItem(formData: FormData) {
@@ -158,12 +172,16 @@ export async function moveMenuItem(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export async function createTable(formData: FormData) {
+export async function createTable(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const number = Number(formData.get("number"));
   const label = String(formData.get("label") ?? "").trim() || null;
-  if (!Number.isFinite(number)) return;
+  if (!Number.isFinite(number)) return { ok: false, message: "請輸入桌號" };
   await prisma.restaurantTable.create({ data: { number, label } });
   revalidatePath("/admin/tables");
+  return { ok: true, message: "已新增桌號" };
 }
 
 export async function deleteTable(formData: FormData) {
@@ -173,7 +191,10 @@ export async function deleteTable(formData: FormData) {
   revalidatePath("/admin/tables");
 }
 
-export async function updateSettings(formData: FormData) {
+export async function updateSettings(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const keys = ["storeName", "phone", "address", "hours", "closedDays", "orderNote", "dailyVegOptions"];
   const dailySoupOptions = formData.getAll("dailySoupOptions").map(String).join("\n");
 
@@ -192,4 +213,5 @@ export async function updateSettings(formData: FormData) {
     }),
   ]);
   revalidatePath("/admin/settings");
+  return { ok: true, message: "已儲存" };
 }

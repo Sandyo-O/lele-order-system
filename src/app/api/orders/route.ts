@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseAddOns, type AddOn } from "@/lib/menu";
+import { getTodayStats } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +16,16 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
 
-  const orders = await prisma.order.findMany({
-    where: status ? { status } : { status: { in: ["pending", "paid"] } },
-    include: { table: true, items: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const [orders, stats] = await Promise.all([
+    prisma.order.findMany({
+      where: status ? { status } : { status: { in: ["pending", "paid"] } },
+      include: { table: true, items: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    getTodayStats(),
+  ]);
 
-  return Response.json({ orders });
+  return Response.json({ orders, stats });
 }
 
 export async function POST(request: Request) {

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { createTable, deleteTable } from "../../actions";
+import { SavableForm } from "../../SavableForm";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function TablesPage() {
         </p>
       </div>
 
-      <form action={createTable} className="flex gap-2 items-end">
+      <SavableForm action={createTable} className="flex gap-2 items-end">
         <label className="text-sm">
           桌號
           <input
@@ -55,7 +56,7 @@ export default async function TablesPage() {
         <button className="bg-amber-600 text-white px-3 py-1.5 rounded-full text-sm">
           新增桌號
         </button>
-      </form>
+      </SavableForm>
 
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
         {tablesWithQr.map((t) => (

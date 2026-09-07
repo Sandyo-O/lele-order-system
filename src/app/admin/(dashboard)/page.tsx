@@ -8,6 +8,7 @@ import {
   deleteMenuItem,
   moveMenuItem,
 } from "../actions";
+import { SavableForm } from "../SavableForm";
 
 export const dynamic = "force-dynamic";
 
@@ -89,7 +90,7 @@ export default async function AdminMenuPage() {
                     </span>
                   </summary>
                   <div className="px-3 pb-3">
-                    <form action={updateMenuItem} className="space-y-2 text-sm">
+                    <SavableForm action={updateMenuItem} className="space-y-2 text-sm">
                       <input type="hidden" name="id" value={item.id} />
                       <label className="block">
                         品名
@@ -200,7 +201,7 @@ export default async function AdminMenuPage() {
                       <button className="bg-amber-600 text-white px-3 py-1.5 rounded-full text-sm">
                         儲存
                       </button>
-                    </form>
+                    </SavableForm>
                     <form action={deleteMenuItem} className="mt-2">
                       <input type="hidden" name="id" value={item.id} />
                       <button className="text-xs text-red-500 underline">刪除此品項</button>
@@ -214,7 +215,7 @@ export default async function AdminMenuPage() {
 
           <details className="mt-3">
             <summary className="text-sm text-amber-700 cursor-pointer">+ 新增品項</summary>
-            <form action={createMenuItem} className="space-y-2 text-sm mt-2">
+            <SavableForm action={createMenuItem} className="space-y-2 text-sm mt-2">
               <input type="hidden" name="categoryId" value={category.id} />
               <label className="block">
                 品名
@@ -303,14 +304,14 @@ export default async function AdminMenuPage() {
               <button className="bg-amber-600 text-white px-3 py-1.5 rounded-full text-sm">
                 新增
               </button>
-            </form>
+            </SavableForm>
           </details>
         </section>
       ))}
 
       <section className="border border-dashed border-neutral-300 rounded-xl p-4">
         <h2 className="font-medium mb-2">+ 新增分類</h2>
-        <form action={createCategory} className="flex gap-2">
+        <SavableForm action={createCategory} className="flex gap-2 items-center">
           <input
             name="name"
             placeholder="例如：每日湯品"
@@ -320,7 +321,7 @@ export default async function AdminMenuPage() {
           <button className="bg-amber-600 text-white px-3 py-1.5 rounded-full text-sm">
             新增分類
           </button>
-        </form>
+        </SavableForm>
       </section>
     </div>
   );

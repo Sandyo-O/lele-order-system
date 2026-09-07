@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseDailyListOptions } from "@/lib/menu";
 import { updateSettings } from "../../actions";
+import { SavableForm } from "../../SavableForm";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-lg space-y-4">
       <h1 className="text-xl font-semibold">店家設定</h1>
-      <form action={updateSettings} className="space-y-3">
+      <SavableForm action={updateSettings} className="space-y-3">
         {FIELDS.map((f) => (
           <label key={f.key} className="block text-sm">
             {f.label}
@@ -81,7 +82,7 @@ export default async function SettingsPage() {
         <button className="bg-amber-600 text-white px-4 py-2 rounded-full text-sm">
           儲存設定
         </button>
-      </form>
+      </SavableForm>
     </div>
   );
 }

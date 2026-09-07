@@ -23,6 +23,12 @@ type OrderView = {
   items: OrderItemView[];
 };
 
+type TodayStats = {
+  revenue: number;
+  orderCount: number;
+  topItems: { name: string; quantity: number }[];
+};
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
 }
@@ -94,8 +100,48 @@ function OrderCard({ order, onUpdate }: { order: OrderView; onUpdate: (id: strin
   );
 }
 
-export default function CounterClient({ initialOrders }: { initialOrders: OrderView[] }) {
+function StatsPanel({ stats }: { stats: TodayStats }) {
+  return (
+    <section className="mb-6 rounded-xl border border-neutral-200 bg-white p-4">
+      <h2 className="font-medium text-neutral-700 mb-3">📊 今日統計</h2>
+      <div className="flex flex-wrap gap-6 mb-4">
+        <div>
+          <div className="text-xs text-neutral-500">今日營收</div>
+          <div className="text-2xl font-semibold text-green-700">${stats.revenue}</div>
+        </div>
+        <div>
+          <div className="text-xs text-neutral-500">今日訂單數</div>
+          <div className="text-2xl font-semibold text-neutral-800">{stats.orderCount}</div>
+        </div>
+      </div>
+      {stats.topItems.length > 0 && (
+        <div>
+          <div className="text-xs text-neutral-500 mb-1.5">熱銷排行</div>
+          <ol className="space-y-1">
+            {stats.topItems.map((it, i) => (
+              <li key={it.name} className="flex items-center justify-between text-sm">
+                <span>
+                  {i + 1}. {it.name}
+                </span>
+                <span className="text-neutral-500">x{it.quantity}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export default function CounterClient({
+  initialOrders,
+  initialStats,
+}: {
+  initialOrders: OrderView[];
+  initialStats: TodayStats;
+}) {
   const [orders, setOrders] = useState<OrderView[]>(initialOrders);
+  const [stats, setStats] = useState<TodayStats>(initialStats);
 
   const refresh = useCallback(async () => {
     try {
@@ -103,6 +149,7 @@ export default function CounterClient({ initialOrders }: { initialOrders: OrderV
       if (!res.ok) return;
       const data = await res.json();
       setOrders(data.orders);
+      if (data.stats) setStats(data.stats);
     } catch {
       // ignore transient network errors, next poll will retry
     }
@@ -138,6 +185,8 @@ export default function CounterClient({ initialOrders }: { initialOrders: OrderV
           後台管理
         </a>
       </div>
+
+      <StatsPanel stats={stats} />
 
       <section className="mb-6">
         <h2 className="font-medium text-neutral-700 mb-2">待結帳（{pending.length}）</h2>
