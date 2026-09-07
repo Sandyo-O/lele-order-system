@@ -79,8 +79,17 @@ export default async function ReportsPage({
   const rest = stats.items.slice(TOP_N);
   const otherRevenue = rest.reduce((s, i) => s + i.revenue, 0);
   const slices = [
-    ...top.map((i) => ({ name: i.name, value: i.revenue })),
-    ...(otherRevenue > 0 ? [{ name: "其他", value: otherRevenue, isOther: true }] : []),
+    ...top.map((i) => ({ name: i.name, value: i.revenue, itemNames: [i.name] })),
+    ...(otherRevenue > 0
+      ? [
+          {
+            name: "其他",
+            value: otherRevenue,
+            isOther: true,
+            itemNames: rest.map((i) => i.name),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -145,7 +154,13 @@ export default async function ReportsPage({
 
       <div className="rounded-xl border border-neutral-200 bg-white p-4">
         <h2 className="font-medium text-neutral-700 mb-3">品項銷售額佔比</h2>
-        <DonutChart slices={slices} centerLabel="總營收" centerValue={`$${stats.revenue}`} />
+        <DonutChart
+          slices={slices}
+          occurrences={stats.occurrences}
+          centerLabel="總營收"
+          centerValue={`$${stats.revenue}`}
+        />
+        <p className="text-xs text-neutral-400 mt-2">點一下圖表或旁邊的品項名稱，可以看該品項的訂單明細</p>
       </div>
 
       <div className="rounded-xl border border-neutral-200 bg-white p-4 overflow-x-auto">
