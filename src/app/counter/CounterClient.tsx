@@ -49,20 +49,33 @@ function OrderCard({ order, onUpdate }: { order: OrderView; onUpdate: (id: strin
         <div className="text-xs text-neutral-500">{formatTime(order.createdAt)}</div>
       </div>
 
-      <ul className="space-y-1 mb-3">
+      <div className="text-xs text-neutral-400 mb-1.5">共 {order.items.length} 項品項</div>
+      <ul className="mb-3 divide-y divide-neutral-100 rounded-lg border border-neutral-100 overflow-hidden">
         {order.items.map((item) => {
           const addOns = parseAddOns(item.selectedAddOns);
           return (
-            <li key={item.id} className="text-sm flex justify-between gap-2">
-              <span>
-                {item.nameSnapshot}
-                {item.variant === "combo" ? "（套餐）" : item.variant === "single" ? "（單點）" : ""}
-                {addOns.length > 0 && ` +${addOns.map((a) => a.name).join("、")}`}
-                {item.note ? `（${item.note}）` : ""}
-                {" x"}
-                {item.quantity}
-              </span>
-              <span>${item.priceSnapshot * item.quantity}</span>
+            <li key={item.id} className="bg-white/60 px-2.5 py-2">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-sm text-neutral-900">{item.nameSnapshot}</span>
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-semibold bg-neutral-200 text-neutral-700 rounded-full px-2 py-0.5">
+                    x{item.quantity}
+                  </span>
+                  <span className="text-sm font-medium text-neutral-800">
+                    ${item.priceSnapshot * item.quantity}
+                  </span>
+                </span>
+              </div>
+              {(item.variant || addOns.length > 0) && (
+                <div className="text-xs text-neutral-500 mt-0.5">
+                  {item.variant === "combo" ? "套餐" : item.variant === "single" ? "單點" : ""}
+                  {addOns.length > 0 &&
+                    `${item.variant ? " ・ " : ""}加購：${addOns.map((a) => a.name).join("、")}`}
+                </div>
+              )}
+              {item.note && (
+                <div className="text-xs text-amber-700 mt-0.5">備註：{item.note}</div>
+              )}
             </li>
           );
         })}

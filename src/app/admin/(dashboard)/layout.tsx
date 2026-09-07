@@ -15,6 +15,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/settings" className="text-neutral-600">
             店家設定
           </Link>
+          <Link href="/admin/reports" className="text-neutral-600">
+            營業報表
+          </Link>
           <Link href="/counter" className="text-neutral-600">
             櫃台訂單
           </Link>
